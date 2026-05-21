@@ -312,7 +312,15 @@ class _CeaDetailsPageState extends State<CeaDetailsPage> {
                   Divider(color: AppConfig.NDDivider),
                   _buildText('Rx Power:', extraDetails['rxPower']!),
                 ],
-                if (extraDetails.isEmpty && widget.duration.isEmpty)
+                if (extraDetails['reason'] != null) ...[
+                  Divider(color: AppConfig.NDDivider),
+                  _buildText('Reason:', extraDetails['reason']!),
+                ],
+                if (widget.ceaExtraDetails.contains('Reason=') ||
+                    widget.ceaExtraDetails.contains('location=')) ...[
+                  Divider(color: AppConfig.NDDivider),
+                  _buildText('Fault Description:', widget.ceaExtraDetails),
+                ] else if (extraDetails.isEmpty && widget.duration.isEmpty)
                   _buildText('Raw Details:', widget.ceaExtraDetails),
               ],
             ),
@@ -330,27 +338,54 @@ class _CeaDetailsPageState extends State<CeaDetailsPage> {
     String rawDetails = widget.ceaExtraDetails;
     print('Parsing CEA extra details: $rawDetails'); // Debug log
 
-    // Parse new format: Port: GigabitEthernet2/1/5 Circuit: D70611_MOSOO1_MOBITEL_VPLS Rx Power: N/A
-
-    // Extract Port - match everything between "Port:" and "Circuit:"
+    // Extract Port
     RegExp portRegex = RegExp(r'Port:\s*([^:]+?)(?=\s+Circuit:|$)');
     Match? portMatch = portRegex.firstMatch(rawDetails);
     if (portMatch != null) {
       details['port'] = portMatch.group(1)!.trim();
+    } else {
+      RegExp altPortRegex = RegExp(r'PhysicalName=([^\s:]+)');
+      Match? altPortMatch = altPortRegex.firstMatch(rawDetails);
+      if (altPortMatch != null) {
+        details['port'] = altPortMatch.group(1)!.trim();
+      }
     }
 
-    // Extract Circuit - match everything between "Circuit:" and "Rx Power:"
+    // Extract Circuit
     RegExp circuitRegex = RegExp(r'Circuit:\s*([^:]+?)(?=\s+Rx Power:|$)');
     Match? circuitMatch = circuitRegex.firstMatch(rawDetails);
     if (circuitMatch != null) {
       details['circuit'] = circuitMatch.group(1)!.trim();
+    } else {
+      RegExp altCircuitRegex = RegExp(r'If Alias=(.+?)(?=\s+If Memo|:|$)');
+      Match? altCircuitMatch = altCircuitRegex.firstMatch(rawDetails);
+      if (altCircuitMatch != null) {
+        details['circuit'] =
+            altCircuitMatch.group(1)!.replaceAll('##', '').trim();
+      }
     }
 
-    // Extract Rx Power - match everything after "Rx Power:"
+    // Extract Rx Power
     RegExp rxPowerRegex = RegExp(r'Rx Power:\s*(.+?)$');
     Match? rxPowerMatch = rxPowerRegex.firstMatch(rawDetails);
-    if (rxPowerMatch != null) {
+
+    RegExp altRxPowerRegex = RegExp(
+        r'current Rx power is\s*([-\d.]+\s*(?:dBm|dBM|dbm|dB))',
+        caseSensitive: false);
+    Match? altRxPowerMatch = altRxPowerRegex.firstMatch(rawDetails);
+
+    if (altRxPowerMatch != null) {
+      details['rxPower'] = altRxPowerMatch.group(1)!.trim();
+    } else if (rxPowerMatch != null) {
       details['rxPower'] = rxPowerMatch.group(1)!.trim();
+    }
+
+    // Extract Fault Description / Reason
+    RegExp reasonRegex = RegExp(r'Reason=(.*?)(?=The detail information|$)',
+        caseSensitive: false);
+    Match? reasonMatch = reasonRegex.firstMatch(rawDetails);
+    if (reasonMatch != null) {
+      details['reason'] = reasonMatch.group(1)!.trim();
     }
 
     print('Parsed CEA extra details: $details'); // Debug log
