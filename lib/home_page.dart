@@ -2121,6 +2121,9 @@
 
 ///////////////////// Original code working properly //////
 
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:sltnoc/http.dart' as http;
@@ -2148,6 +2151,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Map<String, bool> engNameList = {};
   Set<Marker> _markers = {};
   bool _isLoading = true;
+  BitmapDescriptor? _msanIcon;
+  BitmapDescriptor? _ceaIcon;
+  BitmapDescriptor? _rpbIcon;
+  BitmapDescriptor? _otherIcon;
+  List<String> _lastMsansWithGeo = [];
 
   late TabController _tabController;
 
@@ -2156,6 +2164,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _requestLocationPermission();
+    _loadMarkerIcons();
     fetchDataAndProcess();
   }
 
@@ -2183,6 +2192,83 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     } catch (e) {
       // Handle any unexpected errors
       print("An error occurred while requesting location permission: $e");
+    }
+  }
+
+  Future<void> _loadMarkerIcons() async {
+    _msanIcon = await _buildMarkerIcon(Colors.blue.shade700, 'M');
+    _ceaIcon = await _buildMarkerIcon(Colors.green.shade600, 'C');
+    _rpbIcon = await _buildMarkerIcon(Colors.yellow.shade700, 'R');
+    _otherIcon = await _buildMarkerIcon(Colors.red.shade700, '');
+
+    if (mounted) {
+      if (_lastMsansWithGeo.isNotEmpty) {
+        updateMarkers(_lastMsansWithGeo);
+      } else {
+        setState(() {});
+      }
+    }
+  }
+
+  Future<BitmapDescriptor> _buildMarkerIcon(Color color, String label) async {
+    const double size = 50;
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final ui.Canvas canvas = ui.Canvas(pictureRecorder);
+    final Paint fillPaint = Paint()..color = color;
+    final Paint borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final double radius = size / 2;
+    final Offset center = Offset(radius, radius);
+
+    canvas.drawCircle(center, radius, fillPaint);
+    canvas.drawCircle(center, radius, borderPaint);
+
+    if (label.isNotEmpty) {
+      final double fontSize = size * 0.5;
+      final TextPainter textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      final Offset textOffset = Offset(
+        center.dx - (textPainter.width / 2),
+        center.dy - (textPainter.height / 2),
+      );
+      textPainter.paint(canvas, textOffset);
+    }
+
+    final ui.Image image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+    final ByteData? data =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
+  }
+
+  BitmapDescriptor _iconForPlatform(String platform) {
+    switch (platform.toUpperCase()) {
+      case 'MSAN':
+        return _msanIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+      case 'CEA':
+        return _ceaIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+      case 'RPB':
+        return _rpbIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+      default:
+        return _otherIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
     }
   }
 
@@ -2708,6 +2794,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   //////
 
   void updateMarkers(List<String> msansWithGeo) {
+    _lastMsansWithGeo = msansWithGeo;
     final updatedMarkers = msansWithGeo
         .map((msanWithGeo) {
           final parts = msanWithGeo.split('::');
@@ -2717,28 +2804,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             final lat = double.tryParse(parts[5]);
             final lng = double.tryParse(parts[6]);
             if (lat != null && lng != null) {
-              BitmapDescriptor markerIcon;
-              switch (parts[4]) {
-                case 'MSAN':
-                  markerIcon = BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueAzure);
-                  break;
-                case 'CEA':
-                  markerIcon = BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueGreen);
-                  break;
-                // case 'GPON':
-                //   markerIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
-                //   break;
-                case 'RPB':
-                  markerIcon = BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueYellow);
-                  break;
-                default:
-                  markerIcon = BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueRed);
-                  break;
-              }
+              final BitmapDescriptor markerIcon =
+                  _iconForPlatform(parts[4].trim());
 
               // String snippetText = parts[2] + ' | ' + parts[3];
               // if (parts.length > 7) snippetText += ' | ' + parts[7];
@@ -2749,6 +2816,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 markerId: MarkerId(parts[0]),
                 position: LatLng(lng, lat),
                 icon: markerIcon,
+                anchor: const Offset(0.5, 0.5),
                 infoWindow: InfoWindow(
                   title: parts[0],
                   snippet: parts[2] + '| ' + parts[3],
