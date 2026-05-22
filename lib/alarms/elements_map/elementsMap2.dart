@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sltnoc/settings_button.dart';
@@ -137,12 +140,100 @@ class _elementsMapPage2State extends State<elementsMapPage2> {
   Location location = Location();
   bool _isLoading = true;
   List<Map<String, dynamic>> _locations = [];
+  BitmapDescriptor? _nodeDownIcon;
+  BitmapDescriptor? _alarmOtherIcon;
+  BitmapDescriptor? _alarmNoneIcon;
 
   @override
   void initState() {
     super.initState();
     _currentMapType = MapType.normal;
+    _loadMarkerIcons();
     _fetchElementDetails();
+  }
+
+  Future<void> _loadMarkerIcons() async {
+    _nodeDownIcon = await _buildMarkerIcon(Colors.red.shade700, 'M');
+    _alarmOtherIcon = await _buildMarkerIcon(Colors.yellow.shade700, 'M');
+    _alarmNoneIcon = await _buildMarkerIcon(Colors.green.shade600, 'M');
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<BitmapDescriptor> _buildMarkerIcon(Color color, String label) async {
+    const double size = 50;
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final ui.Canvas canvas = ui.Canvas(pictureRecorder);
+    final Paint fillPaint = Paint()..color = color;
+    final Paint borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final double radius = size / 2;
+    final Offset center = Offset(radius, radius);
+
+    canvas.drawCircle(center, radius, fillPaint);
+    canvas.drawCircle(center, radius, borderPaint);
+
+    final double fontSize = size * 0.5;
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    final Offset textOffset = Offset(
+      center.dx - (textPainter.width / 2),
+      center.dy - (textPainter.height / 2),
+    );
+    textPainter.paint(canvas, textOffset);
+
+    final ui.Image image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+    final ByteData? data =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
+  }
+
+  String _alarmStatusFromIssues(String issues) {
+    final String trimmed = issues.trim();
+    if (trimmed.isEmpty) {
+      return 'none';
+    }
+    final String value = trimmed.toLowerCase();
+    if (value == '0' ||
+        value == 'none' ||
+        value.contains('no alarm') ||
+        value.contains('no alarms')) {
+      return 'none';
+    }
+    if (value.contains('node down')) {
+      return 'down';
+    }
+    return 'other';
+  }
+
+  BitmapDescriptor _iconForIssues(String issues) {
+    switch (_alarmStatusFromIssues(issues)) {
+      case 'down':
+        return _nodeDownIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+      case 'none':
+        return _alarmNoneIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+      default:
+        return _alarmOtherIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+    }
   }
 
   @override
@@ -238,10 +329,13 @@ class _elementsMapPage2State extends State<elementsMapPage2> {
     for (int i = 0; i < _locations.length; i++) {
       Map<String, dynamic> location = _locations[i];
       List<double> coordinates = location['coordinates'];
+      final String issues = (location['issues'] ?? '').toString();
       markers.add(
         Marker(
           markerId: MarkerId('marker_$i'),
           position: LatLng(coordinates[1], coordinates[0]),
+          icon: _iconForIssues(issues),
+          anchor: const Offset(0.5, 0.5),
           onTap: () {
             showModalBottomSheet(
               context: context,
