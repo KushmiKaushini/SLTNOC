@@ -21,6 +21,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
   late Future<void> _fetchDataFuture;
   List<Map<String, dynamic>> plannedOutageDetailsMap = [];
   Map<String, bool> engNameList = {};
+  String _selectedEngName = 'All';
 
   @override
   void initState() {
@@ -75,11 +76,12 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
     String engName;
 
     try {
-      // Fetch the eng list
-      await fetchEngNameList();
+      // Fetch the eng list if not already fetched
+      if (engNameList.isEmpty) {
+        await fetchEngNameList();
+      }
 
-      // Check if the name exists in the engNameList
-      engName = engNameList.containsKey(widget.name) ? widget.name : 'All';
+      engName = _selectedEngName;
 
       String soapBody = '''<?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -194,6 +196,36 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
             children: [
               // _buildText('Work Group:', widget.title),
               // const SizedBox(height: 16),
+              if (engNameList.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(5.0),
+                    border: Border.all(color: AppConfig.tableBorderColor),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedEngName,
+                      isExpanded: true,
+                      items: ['All', ...engNameList.keys].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        if (newValue != null && newValue != _selectedEngName) {
+                          setState(() {
+                            _selectedEngName = newValue;
+                            _fetchDataFuture = fetchPlannedOutageDetails();
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
               Expanded(
                 child: FutureBuilder<void>(
                   future: _fetchDataFuture,
