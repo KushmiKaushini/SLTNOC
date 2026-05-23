@@ -115,8 +115,8 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
             var td = tableName.findElements("td").first.text;
             var tt = tableName.findElements("tt").first.text;
             var reason = tableName.findElements("reason").first.text;
-            var elementCode = tableName.findElements("element_code").isNotEmpty
-                ? tableName.findElements("element_code").first.text
+            var elementCode = tableName.findElements("node").isNotEmpty
+                ? tableName.findElements("node").first.text
                 : null;
             var supplier = tableName.findElements("supplier").isNotEmpty
                 ? tableName.findElements("supplier").first.text
@@ -134,7 +134,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
               "td": td,
               "tt": tt,
               "reason": reason,
-              "element_code": elementCode,
+              "node": elementCode,
               "supplier": supplier,
               "platform": platform,
             });
@@ -361,10 +361,10 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                                 : screenHeight),
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF0056A2))),
-                                if (index['element_code'] != null) ...[
+                                if (index['node'] != null) ...[
                                   const TextSpan(text: '\n'),
                                   TextSpan(
-                                      text: 'Element Node: ',
+                                      text: 'Node: ',
                                       style: TextStyle(
                                           fontSize: 0.037 *
                                               (MediaQuery.of(context)
@@ -375,7 +375,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black)),
                                   TextSpan(
-                                      text: index['element_code'],
+                                      text: index['node'],
                                       style: TextStyle(
                                           fontSize: 0.037 *
                                               (MediaQuery.of(context)
