@@ -6,8 +6,6 @@ import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/loading_indicator.dart';
 
-import 'current_alarms.dart';
-
 class RegionsPage extends StatefulWidget {
   const RegionsPage({Key? key}) : super(key: key);
 

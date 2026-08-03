@@ -150,6 +150,8 @@ import 'package:xml/xml.dart' as xml;
 import 'current_alarms_expanded1.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CurrentAlarmsPage extends StatefulWidget {
   final String province;
@@ -174,6 +176,35 @@ class _CurrentAlarmsPageState extends State<CurrentAlarmsPage> {
   }
 
   Future<void> fetchData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final useLocalServer = prefs.getBool('useLocalServer') ?? true;
+      final serverUrl = prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
+
+      if (useLocalServer) {
+        final response = await http.get(
+          Uri.parse('$serverUrl/api/alarms1/data/${widget.province}'),
+        );
+        if (response.statusCode == 200) {
+          final List<dynamic> jsonData = json.decode(response.body);
+          List<Map<String, dynamic>> data = [];
+          for (var item in jsonData) {
+            data.add({
+              "Name": (item['NW_ENG'] ?? '').toString(),
+              "Open Alarms": (item['OpenAlarms'] ?? 0).toString(),
+            });
+          }
+          setState(() {
+            mapCList = data;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      print('Local fetch alarms failed, trying SOAP: $e');
+    }
+
+    // SOAP fallback
     await fetchAlarms(); // Call the method to fetch alarms from the first web service
     if (widget.province.toUpperCase() != "ALL") {
       // If province is not equal to "ALL", call the second web service

@@ -147,7 +147,7 @@ import 'package:flutter/material.dart';
 import 'package:sltnoc/settings_button.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
-import 'alarm_type_details.dart';
+import 'node_type_selection.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
 
@@ -333,14 +333,13 @@ class _AlarmsByAlarmTypesPageState extends State<AlarmsByAlarmTypesPage> {
                 return DataRow(
                   onSelectChanged: (bool? selected) {
                     if (selected != null && selected) {
-                      // Navigate to NodeDetailsPage when the row is tapped
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AlarmDetailsPage(
+                          builder: (context) => NodeTypeSelectionPage(
+                              alarmType: data['AlarmType'].toString(),
                               name: '...ALL...',
-                              province: '...All...',
-                              alarmType: data['AlarmType'].toString()),
+                              province: '...All...'),
                         ),
                       );
                     }

@@ -18,10 +18,12 @@ class PlanOutagesPage extends StatefulWidget {
 }
 
 class _PlanOutagesPageState extends State<PlanOutagesPage> {
+  static const String _allEngineersLabel = 'All';
+
   late Future<void> _fetchDataFuture;
   List<Map<String, dynamic>> plannedOutageDetailsMap = [];
   Map<String, bool> engNameList = {};
-  String _selectedEngName = 'All';
+  String _selectedEngName = _allEngineersLabel;
 
   @override
   void initState() {
@@ -52,7 +54,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
       // Parse the response and update engNameList map
       final fullEngListXml = xml.XmlDocument.parse(fullEngListResponse.body);
       final fullEngListResult =
-          fullEngListXml.findAllElements('fullenglistResult').single.text;
+          fullEngListXml.findAllElements('fullenglistResult').single.innerText;
 
       final names = fullEngListResult.split(',').map((record) {
         // Extract the name from each record
@@ -62,7 +64,9 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
 
       // Add extracted names to the engNameList map
       for (final name in names) {
-        engNameList[name] = true;
+        if (name.isNotEmpty) {
+          engNameList[name] = true;
+        }
       }
     } else {
       // Handle error case
@@ -72,18 +76,43 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
   }
 
   Future<void> fetchPlannedOutageDetails() async {
-    const String soapEndpoint = 'https://fmt.slt.com.lk/fmt/WClogin.asmx';
-    String engName;
-
     try {
       // Fetch the eng list if not already fetched
       if (engNameList.isEmpty) {
         await fetchEngNameList();
       }
 
-      engName = _selectedEngName;
+      final selectedNames = _selectedEngName == _allEngineersLabel
+          ? engNameList.keys.toList()
+          : <String>[_selectedEngName];
 
-      String soapBody = '''<?xml version="1.0" encoding="utf-8"?>
+      final plannedOutageDetails = <Map<String, dynamic>>[];
+
+      if (selectedNames.isEmpty) {
+        plannedOutageDetails
+            .addAll(await _fetchPlannedOutageDetailsFor('...ALL...'));
+      } else {
+        for (final engName in selectedNames) {
+          plannedOutageDetails
+              .addAll(await _fetchPlannedOutageDetailsFor(engName));
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        // Update your state with the fetched data
+        plannedOutageDetailsMap = plannedOutageDetails;
+      });
+    } catch (error) {
+      print('Error fetching data: $error');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchPlannedOutageDetailsFor(
+      String engName) async {
+    const String soapEndpoint = 'https://fmt.slt.com.lk/fmt/WClogin.asmx';
+    final soapBody = '''<?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
             <get_Planned_Outage_Details xmlns="http://tempuri.org/">
@@ -92,6 +121,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
           </soap:Body>
         </soap:Envelope>''';
 
+    try {
       final response = await http.post(
         Uri.parse(soapEndpoint),
         headers: {
@@ -111,21 +141,17 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
         for (var resultNode in resultNodes) {
           var tableNames = resultNode.findAllElements("TableName");
           for (var tableName in tableNames) {
-            var acno = tableName.findElements("acno").first.text;
-            var fd = tableName.findElements("fd").first.text;
-            var ft = tableName.findElements("ft").first.text;
-            var td = tableName.findElements("td").first.text;
-            var tt = tableName.findElements("tt").first.text;
-            var reason = tableName.findElements("reason").first.text;
-            var elementCode = tableName.findElements("node").isNotEmpty
-                ? tableName.findElements("node").first.text
-                : null;
-            var supplier = tableName.findElements("supplier").isNotEmpty
-                ? tableName.findElements("supplier").first.text
-                : null;
-            var platform = tableName.findElements("platform").isNotEmpty
-                ? tableName.findElements("platform").first.text
-                : null;
+            var acno = _elementText(tableName, ['acno', 'AccountNo']);
+            var fd = _elementText(tableName, ['fd', 'from_date']);
+            var ft = _elementText(tableName, ['ft', 'from_time']);
+            var td = _elementText(tableName, ['td', 'to_date']);
+            var tt = _elementText(tableName, ['tt', 'to_time']);
+            var reason = _elementText(tableName, ['reason']);
+            var elementCode = _elementText(tableName,
+                ['node', 'element_code', 'elementcode', 'element', 'Element']);
+            var supplier = _elementText(tableName, ['supplier', 'vendor']);
+            var platform =
+                _elementText(tableName, ['platform', 'node_type', 'nodetype']);
 
             // print('acno: $acno, fd: $fd, ft: $ft, td: $td, tt: $tt, reason: $reason, element_code: $elementCode, supplier: $supplier, platform: $platform');
 
@@ -143,16 +169,31 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
           }
         }
 
-        setState(() {
-          // Update your state with the fetched data
-          plannedOutageDetailsMap = plannedOutageDetails;
-        });
-      } else {
-        print('Failed to fetch data: ${response.statusCode}');
+        return plannedOutageDetails;
       }
     } catch (error) {
-      print('Error fetching data: $error');
+      print('Error fetching planned outage data for $engName: $error');
     }
+
+    print('Failed to fetch data for $engName');
+    return [];
+  }
+
+  String _elementText(xml.XmlElement parent, List<String> names) {
+    final normalizedNames = names.map((name) => name.toLowerCase()).toSet();
+
+    for (final child in parent.childElements) {
+      if (normalizedNames.contains(child.name.local.toLowerCase())) {
+        return child.innerText.trim();
+      }
+    }
+
+    return '';
+  }
+
+  String _displayValue(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? 'N/A' : text;
   }
 
   @override
@@ -209,7 +250,8 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                     child: DropdownButton<String>(
                       value: _selectedEngName,
                       isExpanded: true,
-                      items: ['All', ...engNameList.keys].map((String value) {
+                      items: [_allEngineersLabel, ...engNameList.keys]
+                          .map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
@@ -314,7 +356,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black)),
                                 TextSpan(
-                                    text: index['acno'],
+                                    text: _displayValue(index['acno']),
                                     style: TextStyle(
                                         fontSize: 0.037 *
                                             (MediaQuery.of(context)
@@ -337,7 +379,8 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black)),
                                 TextSpan(
-                                    text: '${index['fd']} ${index['ft']}',
+                                    text:
+                                        '${_displayValue(index['fd'])} ${_displayValue(index['ft'])}',
                                     style: TextStyle(
                                         fontSize: 0.037 *
                                             (MediaQuery.of(context)
@@ -360,7 +403,8 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black)),
                                 TextSpan(
-                                    text: '${index['td']} ${index['tt']}',
+                                    text:
+                                        '${_displayValue(index['td'])} ${_displayValue(index['tt'])}',
                                     style: TextStyle(
                                         fontSize: 0.037 *
                                             (MediaQuery.of(context)
@@ -383,7 +427,7 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black)),
                                 TextSpan(
-                                    text: index['reason'],
+                                    text: _displayValue(index['reason']),
                                     style: TextStyle(
                                         fontSize: 0.037 *
                                             (MediaQuery.of(context)
@@ -393,81 +437,75 @@ class _PlanOutagesPageState extends State<PlanOutagesPage> {
                                                 : screenHeight),
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF0056A2))),
-                                if (index['node'] != null) ...[
-                                  const TextSpan(text: '\n'),
-                                  TextSpan(
-                                      text: 'Node: ',
-                                      style: TextStyle(
-                                          fontSize: 0.037 *
-                                              (MediaQuery.of(context)
-                                                          .orientation ==
-                                                      Orientation.portrait
-                                                  ? screenWidth
-                                                  : screenHeight),
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black)),
-                                  TextSpan(
-                                      text: index['node'],
-                                      style: TextStyle(
-                                          fontSize: 0.037 *
-                                              (MediaQuery.of(context)
-                                                          .orientation ==
-                                                      Orientation.portrait
-                                                  ? screenWidth
-                                                  : screenHeight),
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0056A2))),
-                                ],
-                                if (index['supplier'] != null) ...[
-                                  const TextSpan(text: '\n'),
-                                  TextSpan(
-                                      text: 'Supplier: ',
-                                      style: TextStyle(
-                                          fontSize: 0.037 *
-                                              (MediaQuery.of(context)
-                                                          .orientation ==
-                                                      Orientation.portrait
-                                                  ? screenWidth
-                                                  : screenHeight),
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black)),
-                                  TextSpan(
-                                      text: index['supplier'],
-                                      style: TextStyle(
-                                          fontSize: 0.037 *
-                                              (MediaQuery.of(context)
-                                                          .orientation ==
-                                                      Orientation.portrait
-                                                  ? screenWidth
-                                                  : screenHeight),
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0056A2))),
-                                ],
-                                if (index['platform'] != null) ...[
-                                  const TextSpan(text: '\n'),
-                                  TextSpan(
-                                      text: 'Platform: ',
-                                      style: TextStyle(
-                                          fontSize: 0.037 *
-                                              (MediaQuery.of(context)
-                                                          .orientation ==
-                                                      Orientation.portrait
-                                                  ? screenWidth
-                                                  : screenHeight),
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black)),
-                                  TextSpan(
-                                      text: index['platform'],
-                                      style: TextStyle(
-                                          fontSize: 0.037 *
-                                              (MediaQuery.of(context)
-                                                          .orientation ==
-                                                      Orientation.portrait
-                                                  ? screenWidth
-                                                  : screenHeight),
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF0056A2))),
-                                ],
+                                const TextSpan(text: '\n'),
+                                TextSpan(
+                                    text: 'Node: ',
+                                    style: TextStyle(
+                                        fontSize: 0.037 *
+                                            (MediaQuery.of(context)
+                                                        .orientation ==
+                                                    Orientation.portrait
+                                                ? screenWidth
+                                                : screenHeight),
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black)),
+                                TextSpan(
+                                    text: _displayValue(index['node']),
+                                    style: TextStyle(
+                                        fontSize: 0.037 *
+                                            (MediaQuery.of(context)
+                                                        .orientation ==
+                                                    Orientation.portrait
+                                                ? screenWidth
+                                                : screenHeight),
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF0056A2))),
+                                const TextSpan(text: '\n'),
+                                TextSpan(
+                                    text: 'Supplier: ',
+                                    style: TextStyle(
+                                        fontSize: 0.037 *
+                                            (MediaQuery.of(context)
+                                                        .orientation ==
+                                                    Orientation.portrait
+                                                ? screenWidth
+                                                : screenHeight),
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black)),
+                                TextSpan(
+                                    text: _displayValue(index['supplier']),
+                                    style: TextStyle(
+                                        fontSize: 0.037 *
+                                            (MediaQuery.of(context)
+                                                        .orientation ==
+                                                    Orientation.portrait
+                                                ? screenWidth
+                                                : screenHeight),
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF0056A2))),
+                                const TextSpan(text: '\n'),
+                                TextSpan(
+                                    text: 'Platform: ',
+                                    style: TextStyle(
+                                        fontSize: 0.037 *
+                                            (MediaQuery.of(context)
+                                                        .orientation ==
+                                                    Orientation.portrait
+                                                ? screenWidth
+                                                : screenHeight),
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black)),
+                                TextSpan(
+                                    text: _displayValue(index['platform']),
+                                    style: TextStyle(
+                                        fontSize: 0.037 *
+                                            (MediaQuery.of(context)
+                                                        .orientation ==
+                                                    Orientation.portrait
+                                                ? screenWidth
+                                                : screenHeight),
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF0056A2))),
                               ],
                             ),
                           ),

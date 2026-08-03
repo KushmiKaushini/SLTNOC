@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sltnoc/settings_button.dart';
 import 'package:sltnoc/alarms/current_alarms/regions.dart';
 import 'package:sltnoc/alarms/current_alarms/alarms_by_alarm_types.dart';
-import 'package:sltnoc/alarms/current_alarms/selected_metro_region.dart';
 import 'package:sltnoc/app_config.dart';
-import 'package:sltnoc/http.dart' as http;
-import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/loading_indicator.dart';
 
 import 'current_alarms.dart';

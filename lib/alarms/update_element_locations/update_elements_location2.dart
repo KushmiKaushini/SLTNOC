@@ -3,7 +3,6 @@ import 'package:sltnoc/settings_button.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'update_elements_location3.dart';
-import 'error_dialog.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
 

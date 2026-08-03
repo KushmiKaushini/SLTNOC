@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const sql = require('mssql');
+const sql = require('./db');
 const dbConfig = require('./dbConfig'); // Importing the DB config file
 
 router.get('/data/:region', async (req, res) => {

@@ -4,6 +4,7 @@ import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
+import 'package:sltnoc/escalations/manual_escalation_service.dart';
 
 class plannedEventsPage extends StatefulWidget {
   final String title;
@@ -20,6 +21,7 @@ class plannedEventsPage extends StatefulWidget {
 class _plannedEventsPageState extends State<plannedEventsPage> {
   late Future<void> _fetchDataFuture;
   List<Map<String, dynamic>> plannedEvents = [];
+  final _manualEscalationService = const ManualEscalationService();
 
   @override
   void initState() {
@@ -73,6 +75,9 @@ class _plannedEventsPageState extends State<plannedEventsPage> {
             });
           }
         }
+        final manualEvents = await _fetchManualEvents();
+        data.insertAll(0, manualEvents);
+
         setState(() {
           plannedEvents = data;
         });
@@ -81,6 +86,28 @@ class _plannedEventsPageState extends State<plannedEventsPage> {
       }
     } catch (error) {
       print('Error fetching data: $error');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchManualEvents() async {
+    try {
+      final manualItems = await _manualEscalationService.fetchActive();
+      return manualItems
+          .where((item) => item.escalationType == 'PLANNED EVENTS')
+          .map((item) {
+        return {
+          "Docket": "MANUAL - ${item.node}",
+          "Status": "${item.severity} | ${item.platform}"
+              "${item.tag.isNotEmpty ? ' | ${item.tag}' : ''}",
+          "Description": "${item.description}\n"
+              "Reporting By: ${item.reportingBy}\n"
+              "Responsible Officer: ${item.responsibleOfficer}",
+          "Duration": item.durationHours.toString(),
+        };
+      }).toList();
+    } catch (error) {
+      print('Error fetching manual escalations: $error');
+      return [];
     }
   }
 

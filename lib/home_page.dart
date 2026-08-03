@@ -2120,7 +2120,10 @@
 // }
 
 ///////////////////// Original code working properly //////
+import 'package:sltnoc/ai_chat_page.dart';
 
+import 'dart:async';
+import 'package:sltnoc/escalations/fault_count_service.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -2147,6 +2150,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  Timer? _faultTimer;
   late GoogleMapController _googleMapController;
   Map<String, bool> engNameList = {};
   Set<Marker> _markers = {};
@@ -2156,6 +2160,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   BitmapDescriptor? _rpbIcon;
   BitmapDescriptor? _otherIcon;
   List<String> _lastMsansWithGeo = [];
+  Map<String, int> _nodeTypeCounts = {
+    'MSAN': 0,
+    'CEA': 0,
+    'RPB': 0,
+    'OTHER': 0,
+  };
 
   late TabController _tabController;
 
@@ -2166,10 +2176,20 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _requestLocationPermission();
     _loadMarkerIcons();
     fetchDataAndProcess();
+
+    _checkFaultsAutomatically();
+    _faultTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _checkFaultsAutomatically();
+    });
+  }
+
+  void _checkFaultsAutomatically() async {
+    await FaultCountService.fetchFaultCount();
   }
 
   @override
   void dispose() {
+    _faultTimer?.cancel(); // Add this line
     _tabController.dispose();
     super.dispose();
   }
@@ -2211,7 +2231,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Future<BitmapDescriptor> _buildMarkerIcon(Color color, String label) async {
-    const double size = 50;
+    const double size = 30;
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
     final ui.Canvas canvas = ui.Canvas(pictureRecorder);
     final Paint fillPaint = Paint()..color = color;
@@ -2272,6 +2292,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
   }
 
+  String _nodeTypeForPlatform(String platform) {
+    switch (platform.trim().toUpperCase()) {
+      case 'MSAN':
+        return 'MSAN';
+      case 'CEA':
+        return 'CEA';
+      case 'RPB':
+        return 'RPB';
+      default:
+        return 'OTHER';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -2312,8 +2345,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             (MediaQuery.of(context).orientation == Orientation.portrait
                 ? screenWidth
                 : screenHeight),
-        actions: const [
-          SettingsButton(),
+        actions: [
+          const SettingsButton(),
         ],
       ),
       body: Container(
@@ -2479,6 +2512,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
+
+
               Row(
                 children: [
                   Expanded(
@@ -2508,6 +2543,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     ),
                   ),
                 ],
+              ),
+
+              // AI Chatbot card — full width
+              MyCard(
+                title: 'AI CHATBOT',
+                displayName: widget.displayName,
+                subtitle: 'NOC Assistant',
+                newSubtitle: 'Powered by Ollama',
+                borderColor: Color(0xFF0056A2),
+                page: 'aiChat',
               ),
             ],
           ),
@@ -2597,38 +2642,46 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget _buildLegacyBarItem(String itemName, Color color) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
+    final baseSize = MediaQuery.of(context).orientation == Orientation.portrait
+        ? screenWidth
+        : screenHeight;
+    final count = _nodeTypeCounts[itemName] ?? 0;
+
     return Container(
       padding: EdgeInsets.symmetric(
-          vertical: 0.02 *
-              (MediaQuery.of(context).orientation == Orientation.portrait
-                  ? screenWidth
-                  : screenHeight),
-          horizontal: 0.03 * MediaQuery.of(context).size.width),
-      child: Row(
+        vertical: 0.018 * baseSize,
+        horizontal: 0.012 * screenWidth,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 0.02 *
-                (MediaQuery.of(context).orientation == Orientation.portrait
-                    ? screenWidth
-                    : screenHeight),
-            height: 0.02 *
-                (MediaQuery.of(context).orientation == Orientation.portrait
-                    ? screenWidth
-                    : screenHeight),
-            color: color,
-            margin: EdgeInsets.only(
-                right: 0.02 *
-                    (MediaQuery.of(context).orientation == Orientation.portrait
-                        ? screenWidth
-                        : screenHeight)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 0.02 * baseSize,
+                height: 0.02 * baseSize,
+                color: color,
+                margin: EdgeInsets.only(right: 0.018 * baseSize),
+              ),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    itemName,
+                    style: TextStyle(fontSize: 0.035 * baseSize),
+                  ),
+                ),
+              ),
+            ],
           ),
           Text(
-            itemName,
+            count.toString(),
             style: TextStyle(
-                fontSize: 0.035 *
-                    (MediaQuery.of(context).orientation == Orientation.portrait
-                        ? screenWidth
-                        : screenHeight)),
+              color: color,
+              fontSize: 0.034 * baseSize,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -2636,51 +2689,60 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Future<void> fetchDataAndProcess() async {
-    await fetchEngNameList();
-    if (engNameList.containsKey(widget.displayName)) {
-      await process2();
-    } else {
-      await process1(nweng: '...ALL...');
-      print('${widget.displayName} not found in engNameList');
+    try {
+      await fetchEngNameList();
+      if (engNameList.containsKey(widget.displayName)) {
+        await process2();
+      } else {
+        await process1(nweng: '...ALL...');
+        print('${widget.displayName} not found in engNameList');
+      }
+    } catch (e) {
+      print('fetchDataAndProcess error (non-fatal): $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   Future<void> fetchEngNameList() async {
-    final fullEngListResponse = await http.post(
-      Uri.parse('https://fmt.slt.com.lk/fmt/WClogin.asmx'),
-      headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': 'http://tempuri.org/fullenglist',
-      },
-      body: '''<?xml version="1.0" encoding="utf-8"?>
+    try {
+      final fullEngListResponse = await http.post(
+        Uri.parse('https://fmt.slt.com.lk/fmt/WClogin.asmx'),
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'http://tempuri.org/fullenglist',
+        },
+        body: '''<?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
             <fullenglist xmlns="http://tempuri.org/">
             </fullenglist>
           </soap:Body>
         </soap:Envelope>''',
-    );
+      ).timeout(const Duration(seconds: 15));
 
-    if (fullEngListResponse.statusCode == 200) {
-      final fullEngListXml = xml.XmlDocument.parse(fullEngListResponse.body);
-      final fullEngListResult =
-          fullEngListXml.findAllElements('fullenglistResult').single.text;
+      if (fullEngListResponse.statusCode == 200) {
+        final fullEngListXml = xml.XmlDocument.parse(fullEngListResponse.body);
+        final fullEngListResult =
+            fullEngListXml.findAllElements('fullenglistResult').single.text;
 
-      final names = fullEngListResult.split(',').map((record) {
-        final name = record.split('::')[0];
-        return name.trim();
-      });
+        final names = fullEngListResult.split(',').map((record) {
+          final name = record.split('::')[0];
+          return name.trim();
+        });
 
-      for (final name in names) {
-        engNameList[name] = true;
+        for (final name in names) {
+          engNameList[name] = true;
+        }
+      } else {
+        print('Failed to fetch engNameList: ${fullEngListResponse.statusCode}');
       }
-    } else {
-      print('Failed to fetch engNameList: ${fullEngListResponse.statusCode}');
+      print(engNameList);
+    } catch (e) {
+      print('fetchEngNameList error (non-fatal): $e');
     }
-    print(engNameList);
   }
 
   Future<void> process1({required String nweng}) async {
@@ -2783,6 +2845,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       if (faults3Result == 'NO ALARMS') {
         final sriLankaLatLng = LatLng(7.8731, 80.7718);
         final cameraPosition = CameraPosition(target: sriLankaLatLng, zoom: 7);
+        updateMarkers([]);
         _googleMapController
             .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
       } else {
@@ -2795,6 +2858,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   void updateMarkers(List<String> msansWithGeo) {
     _lastMsansWithGeo = msansWithGeo;
+    final nodeTypeCounts = {
+      'MSAN': 0,
+      'CEA': 0,
+      'RPB': 0,
+      'OTHER': 0,
+    };
     final updatedMarkers = msansWithGeo
         .map((msanWithGeo) {
           final parts = msanWithGeo.split('::');
@@ -2804,8 +2873,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             final lat = double.tryParse(parts[5]);
             final lng = double.tryParse(parts[6]);
             if (lat != null && lng != null) {
-              final BitmapDescriptor markerIcon =
-                  _iconForPlatform(parts[4].trim());
+              final nodeType = _nodeTypeForPlatform(parts[4]);
+              nodeTypeCounts[nodeType] = (nodeTypeCounts[nodeType] ?? 0) + 1;
+              final BitmapDescriptor markerIcon = _iconForPlatform(nodeType);
 
               // String snippetText = parts[2] + ' | ' + parts[3];
               // if (parts.length > 7) snippetText += ' | ' + parts[7];
@@ -2837,6 +2907,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (mounted) {
       setState(() {
         _markers = updatedMarkers;
+        _nodeTypeCounts = nodeTypeCounts;
       });
     }
   }
@@ -2909,6 +2980,13 @@ class MyCard extends StatelessWidget {
                 title: 'Planned Outages',
                 name: displayName,
               ),
+            ),
+          );
+        } else if (page == 'aiChat') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AIChatPage(),
             ),
           );
         }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sltnoc/settings_button.dart';
-import 'package:sltnoc/http.dart' as http;
 import 'package:location/location.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';

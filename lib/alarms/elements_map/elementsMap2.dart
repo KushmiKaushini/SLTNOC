@@ -58,7 +58,7 @@ class CustomInfoWidget extends StatelessWidget {
                   color:
                       Colors.grey.shade400, // Adjust the icon color as needed
                   // color: Colors.red,
-                  size: 30, // Adjust the icon size as needed
+                  size: 2, // Adjust the icon size as needed
                 ),
               ),
             ],
@@ -162,7 +162,7 @@ class _elementsMapPage2State extends State<elementsMapPage2> {
   }
 
   Future<BitmapDescriptor> _buildMarkerIcon(Color color, String label) async {
-    const double size = 50;
+    const double size = 30;
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
     final ui.Canvas canvas = ui.Canvas(pictureRecorder);
     final Paint fillPaint = Paint()..color = color;
