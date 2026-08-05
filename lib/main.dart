@@ -7,6 +7,7 @@ import 'login_page.dart';
 import 'home_page.dart';
 import 'service/notification_service.dart';
 import 'draggable_chat_button.dart';
+import 'services/credential_store.dart';
 
 const String loginPageRoute = '/login';
 
@@ -22,7 +23,8 @@ class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // Global navigator key so the floating button can navigate from any context
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   // Route observer so overlays can react to navigation events
   static final RouteObserver<ModalRoute<void>> routeObserver =
@@ -118,10 +120,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<bool> _checkLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('username');
-    String? password = prefs.getString('password');
-    return username != null && password != null;
+    return CredentialStore.hasCredentials();
   }
 
   // Function to get the display name from shared preferences
@@ -189,12 +188,10 @@ class _ChatButtonOverlayState extends State<_ChatButtonOverlay>
   void didPopNext() => _checkLogin();
 
   Future<void> _checkLogin() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final username = prefs.getString('username');
-    final password = prefs.getString('password');
+    final loggedIn = await CredentialStore.hasCredentials();
     if (mounted) {
       setState(() {
-        _isLoggedIn = username != null && password != null;
+        _isLoggedIn = loggedIn;
       });
     }
   }

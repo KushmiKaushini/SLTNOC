@@ -124,12 +124,16 @@
 //   }
 // }
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/services/credential_store.dart';
 
-// Development mode toggle - set to false for production
-const bool _DEV_MODE = true;
+// Dev-mode quick-login button is only ever shown in debug builds (kDebugMode
+// is a compile-time constant baked in by Flutter's build tooling, so this is
+// structurally impossible to enable in a release build -- unlike the old
+// manually-toggled boolean it replaced).
 const String _DEV_USERNAME = 'testuser';
 const String _DEV_PASSWORD = 'dev-password';
 const String _DEV_DISPLAY_NAME = 'Test User';
@@ -161,15 +165,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _checkLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('username');
-    String? password = prefs.getString('password');
+    final username = await CredentialStore.getUsername();
+    final password = await CredentialStore.getPassword();
     if (username != null && password != null) {
       await _login(username, password);
     }
   }
 
-  // Dev mode login - bypasses SOAP validation
+  // Dev mode login - bypasses SOAP validation. Only reachable when kDebugMode
+  // is true (see the build() method below), so this can never run in a
+  // release build regardless of any runtime state.
   Future<void> _devLogin() async {
     print('🔓 DEV LOGIN: Initiating dev login bypass...');
     setState(() {
@@ -177,9 +182,11 @@ class _LoginPageState extends State<LoginPage> {
       _showErrorMessage = false;
     });
 
+    await CredentialStore.saveCredentials(
+      username: _DEV_USERNAME,
+      password: _DEV_PASSWORD,
+    );
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', _DEV_USERNAME);
-    await prefs.setString('password', _DEV_PASSWORD);
     await prefs.setString('displayName', _DEV_DISPLAY_NAME);
 
     print('✅ DEV LOGIN: Credentials stored');
@@ -227,9 +234,11 @@ class _LoginPageState extends State<LoginPage> {
     String loginResponseBody = loginResponse.body;
     if (loginResponseBody.contains('TRUE')) {
       print('Login successful: Default User');
+      await CredentialStore.saveCredentials(
+        username: username,
+        password: password,
+      );
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('username', username);
-      prefs.setString('password', password);
       // Extract user name using the second SOAP request
       const String displayNameUrl = 'https://fmt.slt.com.lk/fmt/WClogin.asmx';
       String displayNameRequestBody = '''<?xml version="1.0" encoding="utf-8"?>
@@ -370,7 +379,7 @@ class _LoginPageState extends State<LoginPage> {
                         20), // Add space between button and loading indicator
                 if (_loading) // Show loading indicator only if loading is true
                   CircularProgressIndicator(),
-                if (_DEV_MODE) ...[
+                if (kDebugMode) ...[
                   const SizedBox(height: 30),
                   Divider(),
                   const SizedBox(height: 10),
@@ -395,9 +404,7 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                       padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth < 600
-                            ? screenWidth * 0.2
-                            : 50,
+                        horizontal: screenWidth < 600 ? screenWidth * 0.2 : 50,
                         vertical: 10.0,
                       ),
                     ),
