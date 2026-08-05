@@ -1,0 +1,2 @@
+D:/SLTNOC/SLTNOC/android/app/.cxx/Debug/2g4l5i2x/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/SLTNOC/SLTNOC/android/app/.cxx/Debug/2g4l5i2x/armeabi-v7a/CMakeFiles/rebuild_cache.dir

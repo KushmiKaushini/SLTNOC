@@ -1,0 +1,62 @@
+name: sltnoc
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  fluttertoast: ^8.0.7
+  scrollable_positioned_list: ^0.3.8
+  http: ^0.13.3
+  xml: ^6.5.0
+  google_maps_flutter: ^2.2.4
+  permission_handler: ^11.3.1
+  location: ^5.0.3
+  shared_preferences: ^2.0.8
+  flutter_secure_storage: ^9.2.2
+  connectivity_plus: ^5.0.2
+  speech_to_text: ^7.0.0
+  flutter_tts: ^3.8.5
+
+  cupertino_icons: ^1.0.2
+  custom_info_window: ^1.0.1
+  flutter_app_badger: ^1.5.0
+  flutter_local_notifications: ^18.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: "^0.13.1"
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/NOCPORTAL.jpg"
+  min_sdk_android: 21
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/NEW.png"
+
+  flutter_lints: ^2.0.0
+
+flutter:
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: fonts/Poppins-Regular.ttf
+  assets:
+    - assets/Logo2.png
+    - assets/SLTLogo.png
+    - assets/location.png
+    - assets/sltlogoforbg.png
+    - assets/appbarbg2.png
+    - assets/CardBG.png
+    - assets/CardBGMetros.png
+    - assets/NoData.png
+    - assets/certs/slt_ca.crt
+    - assets/chatbot-icon.png
+  uses-material-design: true
