@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>AI Chat — Powered by Ollama</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d12;
+      --surface: #16161f;
+      --surface2: #1e1e2a;
+      --border: #2a2a3a;
+      --accent: #7c6aff;
+      --accent2: #a78bfa;
+      --accent-glow: rgba(124, 106, 255, 0.25);
+      --text: #e8e8f0;
+      --text-muted: #7a7a90;
+      --user-bubble: linear-gradient(135deg, #7c6aff, #a78bfa);
+      --ai-bubble: #1e1e2a;
+      --radius: 18px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 20% 20%, rgba(124,106,255,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.06) 0%, transparent 50%);
+      animation: bgPulse 8s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes bgPulse {
+      0% { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.1) rotate(3deg); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(22, 22, 31, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #7c6aff, #a78bfa);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .header-info h1 { font-size: 16px; font-weight: 600; }
+    .header-info .status { font-size: 12px; color: #4ade80; display: flex; align-items: center; gap: 5px; }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #4ade80; animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .model-badge {
+      margin-left: auto; font-size: 11px; padding: 4px 10px;
+      border-radius: 20px; background: var(--surface2);
+      color: var(--accent2); border: 1px solid var(--border); font-weight: 500;
+    }
+
+    .messages {
+      flex: 1; overflow-y: auto; padding: 20px 16px;
+      display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    .welcome { text-align: center; padding: 40px 20px; animation: fadeInUp 0.5s ease; }
+    .welcome-emoji { font-size: 48px; margin-bottom: 16px; display: block; animation: float 3s ease-in-out infinite; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .welcome h2 {
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;
+    }
+
+    .welcome p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+    .suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 24px; }
+
+    .suggestion-chip {
+      font-size: 13px; padding: 8px 14px; border-radius: 20px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); cursor: pointer; transition: all 0.2s;
+    }
+
+    .suggestion-chip:hover, .suggestion-chip:active {
+      background: var(--accent-glow); border-color: var(--accent);
+      color: var(--accent2); transform: translateY(-1px);
+    }
+
+    .message { display: flex; gap: 10px; animation: fadeInUp 0.3s ease; }
+    .message.user { flex-direction: row-reverse; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0; align-self: flex-end;
+    }
+
+    .message.user .avatar { background: linear-gradient(135deg, #7c6aff, #a78bfa); }
+    .message.ai .avatar { background: var(--surface2); border: 1px solid var(--border); }
+
+    .bubble {
+      max-width: 78%; padding: 12px 16px; border-radius: var(--radius);
+      font-size: 14px; line-height: 1.6; word-break: break-word;
+    }
+
+    .message.user .bubble {
+      background: linear-gradient(135deg, #7c6aff, #a78bfa);
+      color: #fff; border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .message.ai .bubble {
+      background: var(--ai-bubble); color: var(--text);
+      border-bottom-left-radius: 4px; border: 1px solid var(--border);
+    }
+
+    .typing-indicator {
+      display: flex; gap: 5px; padding: 14px 16px;
+      background: var(--ai-bubble); border: 1px solid var(--border);
+      border-radius: var(--radius); border-bottom-left-radius: 4px; width: fit-content;
+    }
+
+    .typing-dot {
+      width: 7px; height: 7px; background: var(--accent2);
+      border-radius: 50%; animation: typingBounce 1.2s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .input-area {
+      padding: 12px 16px 20px;
+      background: rgba(22, 22, 31, 0.8);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+    }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: flex-end;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 24px; padding: 8px 8px 8px 16px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-row:focus-within {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    #userInput {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px;
+      resize: none; max-height: 120px; line-height: 1.5; padding: 4px 0;
+    }
+
+    #userInput::placeholder { color: var(--text-muted); }
+
+    #sendBtn {
+      width: 38px; height: 38px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #7c6aff, #a78bfa);
+      color: white; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; transition: all 0.2s;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+
+    #sendBtn:hover { transform: scale(1.08); }
+    #sendBtn:active { transform: scale(0.95); }
+    #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    #sendBtn svg { width: 18px; height: 18px; }
+
+    .input-hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+    .bubble pre {
+      background: rgba(0,0,0,0.4); border-radius: 8px;
+      padding: 10px 12px; margin-top: 8px; overflow-x: auto;
+      font-size: 12px; font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-icon">🤖</div>
+    <div class="header-info">
+      <h1>AI Assistant</h1>
+      <div class="status"><div class="status-dot"></div><span>Connected to Ollama</span></div>
+    </div>
+    <div class="model-badge">llama3</div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <span class="welcome-emoji">✨</span>
+      <h2>Hello there!</h2>
+      <p>Your local AI assistant, powered by Llama 3 running privately on your Mac.</p>
+      <div class="suggestions">
+        <div class="suggestion-chip" onclick="sendSuggestion('Tell me a fun fact')">🎲 Fun fact</div>
+        <div class="suggestion-chip" onclick="sendSuggestion('Write a short poem')">✍️ Write a poem</div>
+        <div class="suggestion-chip" onclick="sendSuggestion('Explain quantum computing simply')">🔬 Quantum computing</div>
+        <div class="suggestion-chip" onclick="sendSuggestion('Give me a productivity tip')">💡 Productivity tip</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="userInput" placeholder="Message AI..." rows="1"></textarea>
+      <button id="sendBtn" onclick="sendMessage()" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+    <div class="input-hint">Running locally · Private · Powered by Ollama</div>
+  </div>
+</div>
+
+<script>
+  const OLLAMA_URL = 'http://localhost:11434';
+  const MODEL = 'llama3';
+  const messagesEl = document.getElementById('messages');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  let isStreaming = false;
+
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+  });
+
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  function sendSuggestion(text) { userInput.value = text; sendMessage(); }
+
+  function addMessage(role, content) {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+    const div = document.createElement('div');
+    div.className = 'message ' + role;
+    div.innerHTML = '<div class="avatar">' + (role === 'user' ? '👤' : '🤖') + '</div><div class="bubble">' + escapeHtml(content) + '</div>';
+    messagesEl.appendChild(div);
+    scrollToBottom();
+    return div.querySelector('.bubble');
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'message ai'; div.id = 'typing';
+    div.innerHTML = '<div class="avatar">🤖</div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    messagesEl.appendChild(div); scrollToBottom();
+  }
+
+  function removeTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
+  function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+  function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function formatAIText(text) {
+    return text
+      .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+      .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-size:12px">$1</code>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text || isStreaming) return;
+    isStreaming = true; sendBtn.disabled = true;
+    userInput.value = ''; userInput.style.height = 'auto';
+    addMessage('user', text); showTyping();
+
+    try {
+      const response = await fetch(OLLAMA_URL + '/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: MODEL, prompt: text, stream: true })
+      });
+      removeTyping();
+      const aiBubble = addMessage('ai', '');
+      let fullText = '';
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = decoder.decode(value).split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line);
+            if (data.response) { fullText += data.response; aiBubble.innerHTML = formatAIText(fullText); scrollToBottom(); }
+          } catch {}
+        }
+      }
+    } catch (err) {
+      removeTyping();
+      const b = addMessage('ai', '');
+      b.innerHTML = '&#9888;&#65039; <strong>Connection error.</strong><br>Make sure Ollama is running at ' + OLLAMA_URL;
+      b.style.color = '#f87171';
+    }
+    isStreaming = false; sendBtn.disabled = false; userInput.focus();
+  }
+</script>
+</body>
+</html>

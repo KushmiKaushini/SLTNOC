@@ -162,6 +162,7 @@ import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/settings_button.dart';
 import 'node_details.dart';
 import 'cea_details.dart';
+import 'fault_record_filter.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
 
@@ -225,6 +226,10 @@ class _AlarmDetailsPageState extends State<AlarmDetailsPage> {
         for (var entry in data) {
           List<String> parts = entry.split('::');
           if (parts.length >= 5) {
+            if (isClosedFaultRecord(parts)) {
+              continue;
+            }
+
             String nodeName = parts[0].trim();
             String alarmType = parts[1].trim();
             String hours = parts[2].trim().split(' ')[0];

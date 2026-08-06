@@ -39,12 +39,16 @@ dependencies:
   location: ^5.0.3
   shared_preferences: ^2.0.8
   connectivity_plus: ^5.0.2
+  speech_to_text: ^7.0.0
+  flutter_tts: ^3.8.5
 #  geolocator: ^10.1.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   custom_info_window: ^1.0.1
+  flutter_app_badger: ^1.5.0
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +92,7 @@ flutter:
     - assets/CardBGMetros.png
     - assets/NoData.png
     - assets/certs/slt_ca.crt
+    - assets/chatbot-icon.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

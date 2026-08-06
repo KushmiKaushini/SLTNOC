@@ -184,6 +184,8 @@ import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/alarms/current_alarms/current_alarms.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SelectedMetroRegionPage extends StatefulWidget {
   final String title;
@@ -207,6 +209,29 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
   }
 
   Future<void> fetchProvinces() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final useLocalServer = prefs.getBool('useLocalServer') ?? true;
+      final serverUrl = prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
+
+      if (useLocalServer) {
+        final response = await http.get(
+          Uri.parse('$serverUrl/api/provinces/data/${widget.title}'),
+        );
+        if (response.statusCode == 200) {
+          final List<dynamic> jsonData = json.decode(response.body);
+          setState(() {
+            provinces = List<String>.from(jsonData);
+            isLoading = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      print('Local fetch provinces failed, trying SOAP fallback: $e');
+    }
+
+    // SOAP Fallback / Production Mode
     final String soapRequest = '''<?xml version="1.0" encoding="utf-8"?>
       <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
         <soap:Body>
@@ -216,28 +241,36 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
         </soap:Body>
       </soap:Envelope>''';
 
-    final response = await http.post(
-      Uri.parse('https://fmt.slt.com.lk/fmt/WClogin.asmx'),
-      headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': 'http://tempuri.org/get_province',
-      },
-      body: soapRequest,
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('https://fmt.slt.com.lk/fmt/WClogin.asmx'),
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'http://tempuri.org/get_province',
+        },
+        body: soapRequest,
+      );
 
-    if (response.statusCode == 200) {
-      final xmlDoc = xml.XmlDocument.parse(response.body);
-      final elements = xmlDoc.findAllElements('province');
+      if (response.statusCode == 200) {
+        final xmlDoc = xml.XmlDocument.parse(response.body);
+        final elements = xmlDoc.findAllElements('province');
 
+        setState(() {
+          provinces = elements.map((element) => element.text).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        throw Exception('Failed to load data from SOAP');
+      }
+    } catch (error) {
       setState(() {
-        provinces = elements.map((element) => element.text).toList();
         isLoading = false;
       });
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-      throw Exception('Failed to load data');
+      print('SOAP Fetch failed: $error');
+      // Re-throw or handle gracefully
     }
   }
 

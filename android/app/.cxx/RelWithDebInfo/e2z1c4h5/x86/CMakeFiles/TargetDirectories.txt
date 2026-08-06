@@ -1,0 +1,2 @@
+/Users/ishankacharuka/Downloads/SLTNOC/android/app/.cxx/RelWithDebInfo/e2z1c4h5/x86/CMakeFiles/edit_cache.dir
+/Users/ishankacharuka/Downloads/SLTNOC/android/app/.cxx/RelWithDebInfo/e2z1c4h5/x86/CMakeFiles/rebuild_cache.dir

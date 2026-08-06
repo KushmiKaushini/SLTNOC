@@ -4,6 +4,7 @@ import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
+import 'package:sltnoc/escalations/manual_escalation_service.dart';
 
 class faultsPage extends StatefulWidget {
   final String title;
@@ -20,6 +21,7 @@ class faultsPage extends StatefulWidget {
 class _faultsPageState extends State<faultsPage> {
   late Future<void> _fetchDataFuture;
   List<Map<String, dynamic>> faults = [];
+  final _manualEscalationService = const ManualEscalationService();
 
   @override
   void initState() {
@@ -79,7 +81,9 @@ class _faultsPageState extends State<faultsPage> {
             });
           }
         }
-        // print('data: ${data}');
+        final manualFaults = await _fetchManualFaults();
+        data.insertAll(0, manualFaults);
+
         setState(() {
           faults = data;
         });
@@ -88,6 +92,73 @@ class _faultsPageState extends State<faultsPage> {
       }
     } catch (error) {
       print('Error fetching data: $error');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchManualFaults() async {
+    try {
+      final manualItems = await _manualEscalationService.fetchActive();
+      return manualItems
+          .where((item) => item.escalationType == 'FAULTS')
+          .map((item) {
+        return {
+          "id": item.id,
+          "Docket": "MANUAL - ${item.node}",
+          "Status": "${item.severity} | ${item.platform}"
+              "${item.tag.isNotEmpty ? ' | ${item.tag}' : ''}",
+          "Description": "${item.description}\n"
+              "Reporting By: ${item.reportingBy}\n"
+              "Responsible Officer: ${item.responsibleOfficer}",
+          "Duration": item.durationHours.toString(),
+        };
+      }).toList();
+    } catch (error) {
+      print('Error fetching manual escalations: $error');
+      return [];
+    }
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String faultId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Fault'),
+          content: const Text(
+              'Are you sure you want to delete this fault record? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteFault(faultId);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteFault(String faultId) async {
+    try {
+      await _manualEscalationService.delete(faultId);
+      // Refresh the data after deletion
+      setState(() {
+        _fetchDataFuture = fetchData();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fault deleted successfully')),
+      );
+    } catch (error) {
+      print('Error deleting fault: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting fault: $error')),
+      );
     }
   }
 
@@ -204,8 +275,20 @@ class _faultsPageState extends State<faultsPage> {
                           color: Colors.grey[900])),
                   numeric: true,
                 ),
+                DataColumn(
+                  label: Text('Action',
+                      style: TextStyle(
+                          fontSize: 0.040 *
+                              (MediaQuery.of(context).orientation ==
+                                      Orientation.portrait
+                                  ? screenWidth
+                                  : screenHeight),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[900])),
+                ),
               ],
               rows: faults.map((index) {
+                final faultId = index['id']?.toString().trim() ?? '';
                 return DataRow(
                   cells: [
                     DataCell(
@@ -274,20 +357,34 @@ class _faultsPageState extends State<faultsPage> {
                             vertical: 24.0), // Add top and bottom margin
                         child: Container(
                           alignment: Alignment.centerRight, // Align text right
-                          child: InkWell(
-                            child: Text(index['Duration'].toString(),
-                                textAlign: AppConfig.secondColumnDataAlignment,
-                                style: TextStyle(
-                                    fontSize: 0.037 *
-                                        (MediaQuery.of(context).orientation ==
-                                                Orientation.portrait
-                                            ? screenWidth
-                                            : screenHeight),
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF00305e))),
-                          ),
+                          child: Text(index['Duration'].toString(),
+                              textAlign: AppConfig.secondColumnDataAlignment,
+                              style: TextStyle(
+                                  fontSize: 0.037 *
+                                      (MediaQuery.of(context).orientation ==
+                                              Orientation.portrait
+                                          ? screenWidth
+                                          : screenHeight),
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF00305e))),
                         ),
                       ),
+                    ),
+                    DataCell(
+                      faultId.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.delete,
+                                  color: Colors.red,
+                                  size: 0.04 *
+                                      (MediaQuery.of(context).orientation ==
+                                              Orientation.portrait
+                                          ? screenWidth
+                                          : screenHeight)),
+                              onPressed: () async {
+                                _showDeleteConfirmation(context, faultId);
+                              },
+                            )
+                          : SizedBox.shrink(),
                     ),
                   ],
                 );

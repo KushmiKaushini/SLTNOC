@@ -4,6 +4,7 @@ import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
+import 'package:sltnoc/escalations/manual_escalation_service.dart';
 
 class commonIssuesPage extends StatefulWidget {
   final String title;
@@ -20,6 +21,7 @@ class commonIssuesPage extends StatefulWidget {
 class _commonIssuesPageState extends State<commonIssuesPage> {
   late Future<void> _fetchDataFuture;
   List<Map<String, dynamic>> commonIssues = [];
+  final _manualEscalationService = const ManualEscalationService();
 
   @override
   void initState() {
@@ -79,7 +81,9 @@ class _commonIssuesPageState extends State<commonIssuesPage> {
             });
           }
         }
-        // print('data: ${data}');
+        final manualIssues = await _fetchManualIssues();
+        data.insertAll(0, manualIssues);
+
         setState(() {
           commonIssues = data;
         });
@@ -88,6 +92,28 @@ class _commonIssuesPageState extends State<commonIssuesPage> {
       }
     } catch (error) {
       print('Error fetching data: $error');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchManualIssues() async {
+    try {
+      final manualItems = await _manualEscalationService.fetchActive();
+      return manualItems
+          .where((item) => item.escalationType == 'COMMON ISSUES')
+          .map((item) {
+        return {
+          "Docket": "MANUAL - ${item.node}",
+          "Status": "${item.severity} | ${item.platform}"
+              "${item.tag.isNotEmpty ? ' | ${item.tag}' : ''}",
+          "Description": "${item.description}\n"
+              "Reporting By: ${item.reportingBy}\n"
+              "Responsible Officer: ${item.responsibleOfficer}",
+          "Duration": item.durationHours.toString(),
+        };
+      }).toList();
+    } catch (error) {
+      print('Error fetching manual escalations: $error');
+      return [];
     }
   }
 

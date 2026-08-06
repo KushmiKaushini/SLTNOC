@@ -128,6 +128,12 @@ import 'package:flutter/material.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Development mode toggle - set to false for production
+const bool _DEV_MODE = true;
+const String _DEV_USERNAME = 'testuser';
+const String _DEV_PASSWORD = 'dev-password';
+const String _DEV_DISPLAY_NAME = 'Test User';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -161,6 +167,33 @@ class _LoginPageState extends State<LoginPage> {
     if (username != null && password != null) {
       await _login(username, password);
     }
+  }
+
+  // Dev mode login - bypasses SOAP validation
+  Future<void> _devLogin() async {
+    print('🔓 DEV LOGIN: Initiating dev login bypass...');
+    setState(() {
+      _loading = true;
+      _showErrorMessage = false;
+    });
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('username', _DEV_USERNAME);
+    await prefs.setString('password', _DEV_PASSWORD);
+    await prefs.setString('displayName', _DEV_DISPLAY_NAME);
+
+    print('✅ DEV LOGIN: Credentials stored');
+    print('   Username: $_DEV_USERNAME');
+    print('   Display Name: $_DEV_DISPLAY_NAME');
+
+    if (!mounted) return;
+
+    print('🚀 DEV LOGIN: Navigating to home page...');
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/',
+      (route) => false,
+    );
   }
 
   Future<void> _login(String username, String password) async {
@@ -337,6 +370,40 @@ class _LoginPageState extends State<LoginPage> {
                         20), // Add space between button and loading indicator
                 if (_loading) // Show loading indicator only if loading is true
                   CircularProgressIndicator(),
+                if (_DEV_MODE) ...[
+                  const SizedBox(height: 30),
+                  Divider(),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Dev Mode',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: _loading ? null : _devLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16.0,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth < 600
+                            ? screenWidth * 0.2
+                            : 50,
+                        vertical: 10.0,
+                      ),
+                    ),
+                    child: const Text('Quick Dev Login'),
+                  ),
+                ],
               ],
             ),
           ),

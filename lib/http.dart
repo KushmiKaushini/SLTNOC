@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ export 'package:http/http.dart';
 
 const String _trustedHost = 'fmt.slt.com.lk';
 const String _trustedCaAssetPath = 'assets/certs/slt_ca.crt';
+const Duration _requestTimeout = Duration(seconds: 15);
 
 http.Client? _defaultClient;
 http.Client? _trustedClient;
@@ -53,7 +55,7 @@ Future<http.Response> get(
   Map<String, String>? headers,
 }) async {
   final http.Client client = await _clientFor(url);
-  return client.get(url, headers: headers);
+  return client.get(url, headers: headers).timeout(_requestTimeout);
 }
 
 Future<http.Response> post(
@@ -63,5 +65,7 @@ Future<http.Response> post(
   Encoding? encoding,
 }) async {
   final http.Client client = await _clientFor(url);
-  return client.post(url, headers: headers, body: body, encoding: encoding);
+  return client
+      .post(url, headers: headers, body: body, encoding: encoding)
+      .timeout(_requestTimeout);
 }
