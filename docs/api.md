@@ -191,7 +191,8 @@ try {
 ### Base URL
 - **Configurable**: Stored in `SharedPreferences` as `serverUrl`
 - **Default**: `http://192.168.1.8:3000`
-- **Fallback Chain**: 8 URLs tried sequentially (see `manual_escalation_service.dart`)
+- **Fallback Chain**: 8 URLs tried sequentially (same pattern as Manual Escalation API)
+- **Implementation**: Defined in `lib/ai_chat_page.dart` as `_kChatFallbackUrls` with 5s timeout per attempt
 
 ### Endpoints
 
