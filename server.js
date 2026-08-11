@@ -139,6 +139,18 @@ async function detectIntentAndFetchContext(userMessage) {
   }
 }
 
+// Shared Ollama call options.
+// think:false stops "thinking" models (e.g. qwen3.x) from spending the
+// token budget on invisible reasoning and returning empty content.
+// num_predict/num_ctx bumped up so answers aren't cut short mid-sentence.
+const OLLAMA_OPTIONS = {
+  num_ctx: 2048,
+  num_predict: 500,
+  temperature: 0.2,
+  top_k: 20,
+  top_p: 0.9,
+};
+
 // ── Non-streaming AI Chat endpoint (kept for fallback) ──────────────────────
 app.post('/api/chat', async (req, res) => {
   try {
@@ -165,17 +177,16 @@ app.post('/api/chat', async (req, res) => {
       model: MODEL,
       messages: messages,
       stream: false,
-      options: {
-        num_ctx: 1024,
-        num_predict: 200,
-        temperature: 0.2,
-      },
+      think: false,
+      options: OLLAMA_OPTIONS,
       keep_alive: '24h'
     });
 
+    const replyText = response.message?.content?.trim() || '';
+
     res.json({
       success: true,
-      response: response.message.content
+      response: replyText || "Sorry, I couldn't generate a response for that. Could you try rephrasing?"
     });
   } catch (error) {
     console.error('AI Chat error:', error);
@@ -219,21 +230,31 @@ app.post('/api/chat-stream', async (req, res) => {
       model: MODEL,
       messages: messages,
       stream: true,
-      options: {
-        num_ctx: 1024,
-        num_predict: 200,
-        temperature: 0.2,
-        top_k: 20,
-        top_p: 0.9,
-      },
+      think: false,
+      options: OLLAMA_OPTIONS,
       keep_alive: '24h'
     });
 
+    let sentAnyToken = false;
+
     for await (const chunk of stream) {
+      // Temporary debug line — safe to remove once you've confirmed
+      // responses are consistently non-empty over a few days of use.
+      console.log('CHUNK:', JSON.stringify(chunk.message));
+
       const token = chunk.message?.content || '';
       if (token) {
+        sentAnyToken = true;
         res.write(`data: ${JSON.stringify({ token })}\n\n`);
       }
+    }
+
+    // Safety net: if the model finished with zero visible content
+    // (thinking-only output, empty generation, etc.), tell the client
+    // instead of silently closing the stream with nothing sent.
+    if (!sentAnyToken) {
+      console.warn('Stream completed with no content tokens for message:', message);
+      res.write(`data: ${JSON.stringify({ token: "Sorry, I couldn't generate a response for that. Could you try rephrasing or asking again?" })}\n\n`);
     }
 
     res.write('data: [DONE]\n\n');
@@ -274,7 +295,8 @@ async function warmupOllama() {
     await ollama.chat({
       model: MODEL,
       messages: [{ role: 'user', content: 'hi' }],
-      options: { num_predict: 5 },
+      think: false,
+      options: { num_predict: 20 },
       keep_alive: '24h'
     });
     console.log(`Ollama model (${MODEL}) warmed up and retained in memory.`);
