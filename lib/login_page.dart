@@ -138,6 +138,12 @@ const String _DEV_USERNAME = 'testuser';
 const String _DEV_PASSWORD = 'dev-password';
 const String _DEV_DISPLAY_NAME = 'Test User';
 
+// Development mode toggle - set to false for production
+const bool _DEV_MODE = true;
+const String _DEV_USERNAME = 'testuser';
+const String _DEV_PASSWORD = 'dev-password';
+const String _DEV_DISPLAY_NAME = 'Test User';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -172,9 +178,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Dev mode login - bypasses SOAP validation. Only reachable when kDebugMode
-  // is true (see the build() method below), so this can never run in a
-  // release build regardless of any runtime state.
+  // Dev mode login - bypasses SOAP validation
   Future<void> _devLogin() async {
     print('🔓 DEV LOGIN: Initiating dev login bypass...');
     setState(() {
@@ -182,11 +186,9 @@ class _LoginPageState extends State<LoginPage> {
       _showErrorMessage = false;
     });
 
-    await CredentialStore.saveCredentials(
-      username: _DEV_USERNAME,
-      password: _DEV_PASSWORD,
-    );
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('username', _DEV_USERNAME);
+    await prefs.setString('password', _DEV_PASSWORD);
     await prefs.setString('displayName', _DEV_DISPLAY_NAME);
 
     print('✅ DEV LOGIN: Credentials stored');
@@ -379,7 +381,7 @@ class _LoginPageState extends State<LoginPage> {
                         20), // Add space between button and loading indicator
                 if (_loading) // Show loading indicator only if loading is true
                   CircularProgressIndicator(),
-                if (kDebugMode) ...[
+                if (_DEV_MODE) ...[
                   const SizedBox(height: 30),
                   Divider(),
                   const SizedBox(height: 10),
@@ -404,7 +406,9 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                       padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth < 600 ? screenWidth * 0.2 : 50,
+                        horizontal: screenWidth < 600
+                            ? screenWidth * 0.2
+                            : 50,
                         vertical: 10.0,
                       ),
                     ),

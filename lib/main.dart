@@ -7,7 +7,6 @@ import 'login_page.dart';
 import 'home_page.dart';
 import 'service/notification_service.dart';
 import 'draggable_chat_button.dart';
-import 'services/credential_store.dart';
 
 const String loginPageRoute = '/login';
 
@@ -23,8 +22,7 @@ class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // Global navigator key so the floating button can navigate from any context
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   // Route observer so overlays can react to navigation events
   static final RouteObserver<ModalRoute<void>> routeObserver =
@@ -188,10 +186,12 @@ class _ChatButtonOverlayState extends State<_ChatButtonOverlay>
   void didPopNext() => _checkLogin();
 
   Future<void> _checkLogin() async {
-    final loggedIn = await CredentialStore.hasCredentials();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username');
+    final password = prefs.getString('password');
     if (mounted) {
       setState(() {
-        _isLoggedIn = loggedIn;
+        _isLoggedIn = username != null && password != null;
       });
     }
   }

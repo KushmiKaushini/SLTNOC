@@ -134,7 +134,7 @@ graph TD
     ElementsMap2 --> ElementsMap2Copy[ElementsMap2CopyPage]
 ```
 
-#### Key Alarms Files
+### Key Alarms Files
 
 | File | Purpose |
 |------|---------|
@@ -145,6 +145,31 @@ graph TD
 | `elements_location1.dart` | Google Map with element markers |
 | `update_elements_location1.dart` | GPS coordinate update form |
 | `elementsMap1.dart` | Engineer-assigned elements on map |
+
+---
+
+### AI Chat Module Fallback URLs
+
+The AI Chat module now implements the same resilient fallback URL pattern as the Manual Escalation Service. Defined in `lib/ai_chat_page.dart`:
+
+```dart
+const _kChatFallbackUrls = [
+  'http://192.168.1.8:3000',      // Primary (from SharedPreferences)
+  'http://172.20.10.6:3000',      // Mobile hotspot
+  'http://192.168.1.7:3000',      // Alternate WiFi
+  'http://10.16.188.228:3000',    // Corporate network
+  'http://192.168.1.10:3000',     // Backup local
+  'http://10.0.2.2:3000',         // Android emulator
+  'http://127.0.0.1:3000',        // iOS Simulator / localhost
+];
+const _kConnectionAttemptTimeout = Duration(seconds: 5);
+```
+
+Used for both:
+- `POST /api/chat-stream` (streaming chat)
+- `GET /api/critical-alerts` (proactive alerts)
+
+Each URL is tried sequentially with a 5-second timeout until one succeeds or all fail.
 
 ---
 

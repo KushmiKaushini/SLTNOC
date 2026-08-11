@@ -481,6 +481,8 @@ CustomLoadingIndicator() // Branded spinner with SLT colors
 |---------|----------------|
 | **SOAP Errors** | Try-catch + status code check + user toast |
 | **Network Timeout** | 15s timeout (SOAP), 5s per fallback URL (REST) |
+| **REST Fallback (Escalation API)** | 8 fallback URLs tried sequentially (`_fallbackApiBaseUrls` in `manual_escalation_service.dart`) |
+| **REST Fallback (AI Chat API)** | 8 fallback URLs tried sequentially (`_kChatFallbackUrls` in `ai_chat_page.dart`) for both chat streaming and critical alerts |
 | **Parse Errors** | Graceful degradation, log + empty state |
 | **Retry** | Manual refresh buttons, pull-to-refresh (where applicable) |
 | **Offline** | Cached data where possible (markers, chat history) |

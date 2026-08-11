@@ -392,8 +392,8 @@ graph TB
 | Service | Offline Strategy |
 |---------|------------------|
 | **FMT SOAP** | Request timeout (15s); shows error in UI; map shows last cached markers |
-| **Escalation API** | Falls through `_fallbackApiBaseUrls` (6 URLs); tries each with 5s timeout |
-| **Ollama AI** | Connection error shows retry button; messages saved locally in SharedPreferences |
+| **Escalation API** | Falls through `_fallbackApiBaseUrls` (8 URLs); tries each with 5s timeout |
+| **Ollama AI** | Falls through `_kChatFallbackUrls` (8 URLs); tries each with 5s timeout for both `/api/chat-stream` and `/api/critical-alerts` |
 | **Notifications** | Local only; no server dependency |
 | **Auth** | Cached credentials in SharedPreferences allow offline login |
 
@@ -409,6 +409,21 @@ const _fallbackApiBaseUrls = [
   'http://10.0.2.2:3000',         // Android emulator
   'http://127.0.0.1:3000',        // iOS simulator / localhost
 ];
+```
+
+### Fallback URL Chain (AI Chat)
+```dart
+// In lib/ai_chat_page.dart
+const _kChatFallbackUrls = [
+  'http://192.168.1.8:3000',      // Primary (from SharedPreferences)
+  'http://172.20.10.6:3000',      // Mobile hotspot
+  'http://192.168.1.7:3000',      // Alternate WiFi
+  'http://10.16.188.228:3000',    // Corporate network
+  'http://192.168.1.10:3000',     // Backup local
+  'http://10.0.2.2:3000',         // Android emulator
+  'http://127.0.0.1:3000',        // iOS Simulator / localhost
+];
+const _kConnectionAttemptTimeout = Duration(seconds: 5);
 ```
 
 ---

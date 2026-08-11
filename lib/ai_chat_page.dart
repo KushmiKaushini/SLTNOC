@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
@@ -8,6 +7,18 @@ import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter/foundation.dart';
+
+const List<String> _kChatFallbackUrls = [
+  'http://192.168.1.8:3000',      // Primary (from SharedPreferences)
+  'http://172.20.10.6:3000',      // Mobile hotspot
+  'http://192.168.1.7:3000',      // Alternate WiFi
+  'http://10.16.188.228:3000',    // Corporate network
+  'http://192.168.1.10:3000',     // Backup local
+  'http://10.0.2.2:3000',         // Android emulator
+  'http://127.0.0.1:3000',        // iOS Simulator / localhost
+];
+const Duration _kConnectionAttemptTimeout = Duration(seconds: 5);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data Models
@@ -88,7 +99,6 @@ class ChatSession {
 // Design constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _kBg = Color(0xFFF8FAFC);
 const _kSurface = Colors.white;
 const _kGlass = Color(0xFFE2E8F0);
 const _kBorder = Color(0xFFCBD5E1);
@@ -123,7 +133,7 @@ class _AIChatPageState extends State<AIChatPage>
   // State
   bool _isLoading = false;
   bool _isStreaming = false;
-  String _serverUrl = ''; // Empty = not configured yet, will prompt user
+  String _serverUrl = 'http://192.168.1.8:3000';
   String? _editingMessageId; // ID of user message being edited
 
   // Sessions
@@ -202,7 +212,7 @@ class _AIChatPageState extends State<AIChatPage>
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    _serverUrl = prefs.getString('serverUrl') ?? '';
+    _serverUrl = prefs.getString('serverUrl') ?? 'http://192.168.1.8:3000';
 
     final sessionsJson = prefs.getString('chat_sessions');
     final activeId = prefs.getString('active_session_id');
@@ -224,35 +234,50 @@ class _AIChatPageState extends State<AIChatPage>
 
     setState(() {});
     _fetchCriticalAlerts();
-
-    // If server URL not configured, prompt user to set it
-    if (_serverUrl.isEmpty && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showSettingsDialog();
-      });
-    }
   }
 
   Future<void> _fetchCriticalAlerts() async {
-    // Skip if server URL not configured
-    if (_serverUrl.isEmpty) return;
+    // Try fallback URLs (same pattern as ManualEscalationService)
+    final seen = <String>{};
+    final List<Uri> uris = [];
 
+    // 1. First try saved server URL
     try {
-      final response = await http
-          .get(Uri.parse('$_serverUrl/api/critical-alerts'))
-          .timeout(const Duration(seconds: 4));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true && data['alert'] != null) {
-          setState(() {
-            _criticalAlert = data['alert'] as Map<String, dynamic>;
-          });
+      final prefs = await SharedPreferences.getInstance();
+      final savedUrl = prefs.getString('serverUrl');
+      if (savedUrl != null && savedUrl.trim().isNotEmpty) {
+        final trimmed = savedUrl.trim();
+        if (seen.add(trimmed)) {
+          uris.add(Uri.parse('$trimmed/api/critical-alerts'));
         }
       }
-    } catch (e) {
-      // Silently fail for critical alerts - not critical to UX
-      if (kDebugMode) {
-        debugPrint('Critical alerts fetch failed: $e');
+    } catch (_) {}
+
+    // 2. Then try fallback URLs
+    for (final baseUrl in _kChatFallbackUrls) {
+      final trimmed = baseUrl.trim();
+      if (trimmed.isEmpty || !seen.add(trimmed)) continue;
+      uris.add(Uri.parse('$trimmed/api/critical-alerts'));
+    }
+
+    for (final uri in uris) {
+      try {
+        final response = await http.get(uri).timeout(_kConnectionAttemptTimeout);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true && data['alert'] != null) {
+            if (!mounted) return;
+            setState(() {
+              _criticalAlert = data['alert'] as Map<String, dynamic>;
+            });
+            return; // Success - exit the fallback loop
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Critical alerts API failed for $uri: $e');
+        }
+        // Continue to next fallback URL
       }
     }
   }
@@ -414,18 +439,6 @@ class _AIChatPageState extends State<AIChatPage>
   void _onTextChanged() => setState(() {});
 
   Future<void> _sendMessage([String? prompt]) async {
-    // Check if server URL is configured
-    if (_serverUrl.isEmpty) {
-      _showSettingsDialog();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please configure the server URL first'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
     final text = (prompt ?? _messageController.text).trim();
     if (text.isEmpty || _isLoading || _isStreaming) return;
 
@@ -465,94 +478,109 @@ class _AIChatPageState extends State<AIChatPage>
         .map((m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text})
         .toList();
 
+    // Try fallback URLs (same pattern as ManualEscalationService)
+    final seen = <String>{};
+    final List<Uri> uris = [];
+
+    // 1. First try saved server URL
     try {
-      final client = http.Client();
-      final request = http.Request(
-        'POST',
-        Uri.parse('$_serverUrl/api/chat-stream'),
-      )
-        ..headers['Content-Type'] = 'application/json'
-        ..body = jsonEncode({
-          'message': text,
-          'conversationHistory': conversationHistory,
-        });
+      final prefs = await SharedPreferences.getInstance();
+      final savedUrl = prefs.getString('serverUrl');
+      if (savedUrl != null && savedUrl.trim().isNotEmpty) {
+        final trimmed = savedUrl.trim();
+        if (seen.add(trimmed)) {
+          uris.add(Uri.parse('$trimmed/api/chat-stream'));
+        }
+      }
+    } catch (_) {}
 
-      final response = await client.send(request);
-      if (!mounted) return;
+    // 2. Then try fallback URLs
+    for (final baseUrl in _kChatFallbackUrls) {
+      final trimmed = baseUrl.trim();
+      if (trimmed.isEmpty || !seen.add(trimmed)) continue;
+      uris.add(Uri.parse('$trimmed/api/chat-stream'));
+    }
 
-      if (response.statusCode == 200) {
-        final StringBuffer buffer = StringBuffer();
-        await for (final bytes in response.stream) {
-          if (!mounted) return;
-          final chunk = utf8.decode(bytes);
-          // SSE format: lines starting with "data: "
-          for (final line in chunk.split('\n')) {
-            final trimmed = line.trim();
-            if (trimmed.startsWith('data: ')) {
-              final data = trimmed.substring(6);
-              if (data == '[DONE]') break;
-              try {
-                final json = jsonDecode(data) as Map<String, dynamic>;
-                if (json.containsKey('token')) {
-                  buffer.write(json['token']);
-                  if (!mounted) return;
-                  setState(() {
-                    streamMsg.text = buffer.toString();
-                    _activeSession!.lastUpdated = DateTime.now();
-                  });
-                  _scrollToBottom();
-                } else if (json.containsKey('error')) {
-                  throw Exception(json['error']);
-                }
-              } catch (_) {}
+    Object? lastError;
+    for (final uri in uris) {
+      try {
+        final client = http.Client();
+        final request = http.Request('POST', uri)
+          ..headers['Content-Type'] = 'application/json'
+          ..body = jsonEncode({
+            'message': text,
+            'conversationHistory': conversationHistory,
+          });
+
+        final response = await client.send(request).timeout(_kConnectionAttemptTimeout);
+        if (!mounted) return;
+
+        if (response.statusCode == 200) {
+          final StringBuffer buffer = StringBuffer();
+          await for (final bytes in response.stream) {
+            if (!mounted) return;
+            final chunk = utf8.decode(bytes);
+            // SSE format: lines starting with "data: "
+            for (final line in chunk.split('\n')) {
+              final trimmed = line.trim();
+              if (trimmed.startsWith('data: ')) {
+                final data = trimmed.substring(6);
+                if (data == '[DONE]') break;
+                try {
+                  final json = jsonDecode(data) as Map<String, dynamic>;
+                  if (json.containsKey('token')) {
+                    buffer.write(json['token']);
+                    if (!mounted) return;
+                    setState(() {
+                      streamMsg.text = buffer.toString();
+                      _activeSession!.lastUpdated = DateTime.now();
+                    });
+                    _scrollToBottom();
+                  } else if (json.containsKey('error')) {
+                    throw Exception(json['error']);
+                  }
+                } catch (_) {}
+              }
             }
           }
+          client.close();
+
+          if (!mounted) return;
+          // Final state after stream ends
+          setState(() {
+            _streamingMessage = null;
+            _isStreaming = false;
+            _isLoading = false;
+          });
+
+          if (streamMsg.text.isNotEmpty) {
+            _generateQuickReplies(streamMsg.text);
+          }
+          _saveSessions();
+          _scrollToBottom();
+          return; // Success - exit the fallback loop
+        } else {
+          client.close();
+          throw Exception('HTTP ${response.statusCode}');
         }
-        client.close();
-
-        if (!mounted) return;
-        // Final state after stream ends
-        setState(() {
-          _streamingMessage = null;
-          _isStreaming = false;
-          _isLoading = false;
-        });
-
-        if (streamMsg.text.isNotEmpty) {
-          _generateQuickReplies(streamMsg.text);
+      } catch (e) {
+        lastError = e;
+        if (kDebugMode) {
+          debugPrint('Chat API failed for $uri: $e');
         }
-        _saveSessions();
-        _scrollToBottom();
-      } else {
-        client.close();
-        throw Exception('HTTP ${response.statusCode}');
+        // Continue to next fallback URL
       }
-    } catch (e) {
-      if (!mounted) return;
-      // Remove the empty streaming placeholder
-      setState(() {
-        _activeSession!.messages.remove(streamMsg);
-        _streamingMessage = null;
-        _isStreaming = false;
-        _isLoading = false;
-      });
-
-      // Provide user-friendly error message
-      String errorMsg;
-      final err = e.toString();
-      if (err.contains('Connection refused') || err.contains('Failed host lookup') || err.contains('SocketException')) {
-        errorMsg = 'Cannot connect to server. Please check the server URL in settings (gear icon).';
-      } else if (err.contains('TimeoutException')) {
-        errorMsg = 'Server took too long to respond. Please try again.';
-      } else if (err.contains('HTTP 404')) {
-        errorMsg = 'API endpoint not found. Check server URL and version.';
-      } else if (err.contains('HTTP 500')) {
-        errorMsg = 'Server error. Please try again later.';
-      } else {
-        errorMsg = 'Connection error: $e';
-      }
-      _showError(errorMsg, retryPayload: text);
     }
+
+    // All fallback URLs failed
+    if (!mounted) return;
+    setState(() {
+      _activeSession!.messages.remove(streamMsg);
+      _streamingMessage = null;
+      _isStreaming = false;
+      _isLoading = false;
+    });
+    _showError('Connection error: ${lastError ?? 'All servers unreachable'}', retryPayload: text);
   }
 
   /// Called when the user edits a previously sent message.

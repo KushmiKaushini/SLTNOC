@@ -22,6 +22,7 @@ dependencies:
   connectivity_plus: ^5.0.2
   speech_to_text: ^7.0.0
   flutter_tts: ^3.8.5
+#  geolocator: ^10.1.1
 
   cupertino_icons: ^1.0.2
   custom_info_window: ^1.0.1
@@ -59,4 +60,7 @@ flutter:
     - assets/NoData.png
     - assets/certs/slt_ca.crt
     - assets/chatbot-icon.png
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
   uses-material-design: true
