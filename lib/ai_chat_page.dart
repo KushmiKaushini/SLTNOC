@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/foundation.dart';
+import 'shared_state.dart';
 
 const List<String> _kChatFallbackUrls = [
   'http://192.168.1.8:3000',      // Primary (from SharedPreferences)
@@ -179,30 +180,38 @@ class _AIChatPageState extends State<AIChatPage>
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
-  @override
-  void initState() {
-    super.initState();
-    _messageController.addListener(_onTextChanged);
-    _headerGlowController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 3))
-          ..repeat(reverse: true);
-    _headerGlowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _headerGlowController, curve: Curves.easeInOut),
-    );
-    _loadData();
-    _initSpeech();
-  }
+    @override
+    void initState() {
+      super.initState();
+      _messageController.addListener(_onTextChanged);
+      _headerGlowController =
+          AnimationController(vsync: this, duration: const Duration(seconds: 3))
+            ..repeat(reverse: true);
+      _headerGlowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+        CurvedAnimation(parent: _headerGlowController, curve: Curves.easeInOut),
+      );
+    
+      // Set global flag to hide floating chat button while chat screen is open
+      isChatScreenOpen.value = true;
+    
+      _loadData();
+      _initSpeech();
+    }
 
-  @override
-  void dispose() {
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
-    _scrollController.dispose();
-    _headerGlowController.dispose();
-    _speechToText.stop();
-    _flutterTts.stop();
-    super.dispose();
-  }
+    @override
+    void dispose() {
+      _messageController.removeListener(_onTextChanged);
+      _messageController.dispose();
+      _scrollController.dispose();
+      _headerGlowController.dispose();
+      _speechToText.stop();
+      _flutterTts.stop();
+    
+      // Reset global flag when leaving chat screen
+      isChatScreenOpen.value = false;
+    
+      super.dispose();
+    }
 
   // Proactive Alerts State
   Map<String, dynamic>? _criticalAlert;

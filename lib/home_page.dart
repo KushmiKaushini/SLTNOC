@@ -2140,6 +2140,7 @@ import 'package:sltnoc/settings_button.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sltnoc/widgets/my_card.dart';
 
 class MyHomePage extends StatefulWidget {
   final String displayName;
@@ -2485,9 +2486,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               Row(
                 children: [
                   Expanded(
-                    child: MyCard(
+                    child: MyCard.home(
                       title: 'ALARMS',
-                      displayName: widget.displayName,
                       subtitle: 'Network Alarms',
                       newSubtitle: 'EMS / NMS',
                       borderColor: Color(0xFF0056A2),
@@ -2501,9 +2501,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                               ? screenWidth
                               : screenHeight)),
                   Expanded(
-                    child: MyCard(
+                    child: MyCard.home(
                       title: 'OSS',
-                      displayName: widget.displayName,
                       subtitle: 'Clarity Fault Dockets',
                       newSubtitle: 'Clarity',
                       borderColor: Color(0xFF0056A2),
@@ -2517,9 +2516,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               Row(
                 children: [
                   Expanded(
-                    child: MyCard(
+                    child: MyCard.home(
                       title: 'ESCALATIONS',
-                      displayName: widget.displayName,
                       subtitle: 'Fault Escalations',
                       newSubtitle: 'FMT / SAT',
                       borderColor: Color(0xFF0056A2),
@@ -2533,9 +2531,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                               ? screenWidth
                               : screenHeight)),
                   Expanded(
-                    child: MyCard(
+                    child: MyCard.home(
                       title: 'COMMERCIAL POs',
-                      displayName: widget.displayName,
                       subtitle: 'Planned Outages',
                       newSubtitle: 'EMS / NMS',
                       borderColor: Color(0xFF0056A2),
@@ -2546,9 +2543,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               ),
 
               // AI Chatbot card — full width
-              MyCard(
+              MyCard.home(
                 title: 'AI CHATBOT',
-                displayName: widget.displayName,
                 subtitle: 'NOC Assistant',
                 newSubtitle: 'Powered by Ollama',
                 borderColor: Color(0xFF0056A2),
@@ -2913,159 +2909,5 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   /////
-}
 
-class MyCard extends StatelessWidget {
-  final String title;
-  final String displayName;
-  final String subtitle;
-  final String newSubtitle;
-  final Color borderColor;
-  final String page;
 
-  const MyCard({
-    Key? key,
-    required this.title,
-    required this.displayName,
-    required this.subtitle,
-    required this.newSubtitle,
-    required this.borderColor,
-    required this.page,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    return InkWell(
-      onTap: () {
-        if (page == 'alarms') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AlarmsPage(
-                title: 'Alarms',
-                subtitle: 'Network Alarms',
-                newSubtitle: 'EMS / NMS',
-              ),
-            ),
-          );
-        } else if (page == 'clarity') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ClarityPage(
-                title: 'Clarity',
-                subtitle: 'Clarity Fault Dockets',
-                newSubtitle: 'Clarity',
-              ),
-            ),
-          );
-        } else if (page == 'escalations') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const EscalationsPage(
-                title: 'Escalations',
-                subtitle: 'Fault Escalations',
-                newSubtitle: 'FMT / SAT',
-              ),
-            ),
-          );
-        } else if (page == 'planOutages') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PlanOutagesPage(
-                title: 'Planned Outages',
-                name: displayName,
-              ),
-            ),
-          );
-        } else if (page == 'aiChat') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AIChatPage(),
-            ),
-          );
-        }
-      },
-      splashColor: Colors.white,
-      child: Card(
-        elevation: AppConfig.elevation,
-        margin: EdgeInsets.symmetric(vertical: AppConfig.heightBetweenCards),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConfig.cardBorderRadius),
-        ),
-        color: Colors.white,
-        child: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(AppConfig.cardBackgroundImagePath),
-              fit: BoxFit.cover,
-            ),
-            borderRadius: BorderRadius.circular(AppConfig.cardBorderRadius),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(AppConfig.homePageCardPadding),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                      fontSize: 0.04 *
-                          (MediaQuery.of(context).orientation ==
-                                  Orientation.portrait
-                              ? screenWidth
-                              : screenHeight),
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(
-                    height: 0.01 *
-                        (MediaQuery.of(context).orientation ==
-                                Orientation.portrait
-                            ? screenWidth
-                            : screenHeight)),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                      color: Color(0xFF0056A2),
-                      fontSize: 0.035 *
-                          (MediaQuery.of(context).orientation ==
-                                  Orientation.portrait
-                              ? screenWidth
-                              : screenHeight),
-                      fontWeight: FontWeight.w500),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(
-                    height: 0.01 *
-                        (MediaQuery.of(context).orientation ==
-                                Orientation.portrait
-                            ? screenWidth
-                            : screenHeight)),
-                Text(
-                  newSubtitle,
-                  style: TextStyle(
-                      color: Color(0xFF50B748),
-                      fontSize: 0.035 *
-                          (MediaQuery.of(context).orientation ==
-                                  Orientation.portrait
-                              ? screenWidth
-                              : screenHeight),
-                      fontWeight: FontWeight.w500),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

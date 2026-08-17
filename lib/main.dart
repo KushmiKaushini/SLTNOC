@@ -7,6 +7,7 @@ import 'login_page.dart';
 import 'home_page.dart';
 import 'service/notification_service.dart';
 import 'draggable_chat_button.dart';
+import 'shared_state.dart';
 
 const String loginPageRoute = '/login';
 
@@ -147,6 +148,7 @@ class _MyAppState extends State<MyApp> {
 }
 
 /// Overlay widget that shows the draggable chat button only when logged in
+/// and NOT on the AI chat screen
 class _ChatButtonOverlay extends StatefulWidget {
   const _ChatButtonOverlay({Key? key}) : super(key: key);
 
@@ -202,10 +204,14 @@ class _ChatButtonOverlayState extends State<_ChatButtonOverlay>
   @override
   Widget build(BuildContext context) {
     if (!_isLoggedIn) return const SizedBox.shrink();
-    return Stack(
-      children: const [
-        DraggableChatButton(),
-      ],
+    
+    // Also listen to the global chat screen flag to hide button when chat is open
+    return ValueListenableBuilder<bool>(
+      valueListenable: isChatScreenOpen,
+      builder: (context, isChatOpen, child) {
+        if (isChatOpen) return const SizedBox.shrink();
+        return const DraggableChatButton();
+      },
     );
   }
 }

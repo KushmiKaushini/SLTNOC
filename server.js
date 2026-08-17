@@ -13,6 +13,13 @@ const aiTools = require('./routes/aiTools');
 
 const app = express();
 
+// In-memory cache for /api/critical-alerts (30-60 second TTL)
+let criticalAlertsCache = {
+  data: null,
+  timestamp: 0,
+  ttl: 45000 // 45 seconds
+};
+
 // CORS middleware
 app.use(cors());
 app.use(express.json());
@@ -169,7 +176,7 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
-    const recentHistory = (conversationHistory || []).slice(-4);
+    const recentHistory = (conversationHistory || []).slice(-8);
     messages.push(...recentHistory);
     messages.push({ role: 'user', content: message });
 
@@ -215,7 +222,7 @@ app.post('/api/chat-stream', async (req, res) => {
       });
     }
 
-    const recentHistory = (conversationHistory || []).slice(-4);
+    const recentHistory = (conversationHistory || []).slice(-8);
     messages.push(...recentHistory);
     messages.push({ role: 'user', content: message });
 
@@ -238,9 +245,10 @@ app.post('/api/chat-stream', async (req, res) => {
     let sentAnyToken = false;
 
     for await (const chunk of stream) {
-      // Temporary debug line — safe to remove once you've confirmed
-      // responses are consistently non-empty over a few days of use.
-      console.log('CHUNK:', JSON.stringify(chunk.message));
+      // Debug logging — enable via DEBUG_CHUNKS env var for troubleshooting
+      if (process.env.DEBUG_CHUNKS === 'true') {
+        console.log('CHUNK:', JSON.stringify(chunk.message));
+      }
 
       const token = chunk.message?.content || '';
       if (token) {
@@ -271,9 +279,23 @@ app.post('/api/chat-stream', async (req, res) => {
 // ── Critical Alerts check endpoint (for proactive banner in mobile app) ────
 app.get('/api/critical-alerts', async (req, res) => {
   try {
+    const now = Date.now();
+    // Return cached data if still valid
+    if (criticalAlertsCache.data && (now - criticalAlertsCache.timestamp) < criticalAlertsCache.ttl) {
+      return res.json({ success: true, alert: criticalAlertsCache.data, cached: true });
+    }
+    
+    // Fetch fresh data
     const alertData = await aiTools.getCriticalAlarmsAlert();
+    criticalAlertsCache.data = alertData;
+    criticalAlertsCache.timestamp = now;
+    
     res.json({ success: true, alert: alertData });
   } catch (error) {
+    // If we have cached data, return it even if stale on error
+    if (criticalAlertsCache.data) {
+      return res.json({ success: true, alert: criticalAlertsCache.data, cached: true, stale: true });
+    }
     res.status(500).json({ success: false, error: 'Alert check failed' });
   }
 });

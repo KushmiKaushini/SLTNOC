@@ -10,6 +10,7 @@ import 'package:sltnoc/escalations/Problems/problems.dart';
 import 'package:sltnoc/escalations/Common Issues/common_issues.dart';
 import 'package:sltnoc/escalations/manual_escalation_service.dart';
 import 'package:sltnoc/escalations/fault_count_service.dart';
+import 'package:sltnoc/widgets/my_card.dart';
 
 class EscalationsPage extends StatefulWidget {
   final String title;
@@ -114,12 +115,11 @@ class _EscalationsPageState extends State<EscalationsPage> {
                           if (snapshot.hasData && !snapshot.hasError) {
                             _faultCount = snapshot.data ?? 0;
                           }
-                          return MyCard(
+                          return MyCard.list(
                             title: 'FAULTS',
                             subtitle: 'Fault Escalation',
                             newSubtitle: 'Source: SLT NOC',
                             borderColor: Color(0xFF0056A2),
-                            page: 'faults',
                             badgeCount: _faultCount,
                             onTap: () {
                               Navigator.push(
@@ -135,12 +135,11 @@ class _EscalationsPageState extends State<EscalationsPage> {
                           );
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'PLANNED EVENTS',
                         subtitle: 'Network Maintenance Activities',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: Color(0xFF0056A2),
-                        page: 'planned events',
                         badgeCount: 0,
                         onTap: () {
                           Navigator.push(
@@ -151,12 +150,11 @@ class _EscalationsPageState extends State<EscalationsPage> {
                                       )));
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'PROBLEMS',
                         subtitle: 'Network Related Problems',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: Color(0xFF0056A2),
-                        page: 'problems',
                         badgeCount: 0,
                         onTap: () {
                           Navigator.push(
@@ -167,12 +165,11 @@ class _EscalationsPageState extends State<EscalationsPage> {
                                       )));
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'COMMON ISSUES',
                         subtitle: 'Common Issues',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: Color(0xFF0056A2),
-                        page: 'common issues',
                         badgeCount: 0,
                         onTap: () {
                           Navigator.push(
