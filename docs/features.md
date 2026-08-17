@@ -123,8 +123,8 @@ Row(
   children: [
     _buildLegacyBarItem('MSAN', Colors.blue),   // count badge
     _buildLegacyBarItem('CEA', Colors.green),
+    _buildLegacyBarItem('GPON', Colors.orange),
     _buildLegacyBarItem('RPB', Colors.yellow),
-    _buildLegacyBarItem('OTHER', Colors.red),
   ],
 )
 ```
@@ -255,11 +255,12 @@ graph TB
     AIChatPage[AIChatPage<br/>StatefulWidget + TickerProvider]
     
     subgraph "Core State"
-        Sessions[List<ChatSession>]
-        ActiveSession[ChatSession]
-        Messages[List<ChatMessage>]
-        Streaming[ChatMessage?]
-        QuickReplies[List<String>]
+        Sessions[Chat Sessions<br/>List<ChatSession>]
+        ActiveSession[Active Session<br/>ChatSession]
+        Messages[Messages<br/>List<ChatMessage>]
+        Streaming[Streaming Message<br/>ChatMessage?]
+        QuickReplies[Quick Replies<br/>List<String>]
+        Editing[Editing Message ID<br/>String?]
     end
     
     subgraph "Speech"

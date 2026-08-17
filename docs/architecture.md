@@ -17,11 +17,11 @@ graph TB
     subgraph "Feature Modules"
         C --> C1[Current Alarms]
         C --> C2[Element Locations]
-        C --> C3[Update Locations]
+        C --> C3[Update Element Location]
         C --> C4[Elements Map]
         
         D --> D1[Clarity NW Faults]
-        D --> D2[CEN-CSC-NW/DATA/CC/MS]
+        D --> D2[CEN-CSC Variants]
         D --> D3[Work Groups]
         D --> D4[Service Order Details]
         
@@ -134,6 +134,7 @@ classDiagram
 
 ## Security Architecture
 
+### SSL Certificate Pinning
 ```mermaid
 sequenceDiagram
     participant App
@@ -154,7 +155,7 @@ sequenceDiagram
     HTTPClient-->>App: Response
 ```
 
-### SSL Certificate Pinning
+### SSL Certificate Pinning Details
 - **Asset**: `assets/certs/slt_ca.crt`
 - **Host**: `fmt.slt.com.lk`
 - **Implementation**: Custom `SecurityContext` with trusted cert bytes
