@@ -12,6 +12,7 @@ import 'package:sltnoc/clarity/CEN-CSC-MS/cen-csc-ms.dart';
 import 'package:sltnoc/clarity/Service-Order-Details/service_order_details.dart';
 import 'package:sltnoc/clarity/CLARITY NW FAULTS/clarity-nw-faults.dart';
 import 'package:sltnoc/app_config.dart';
+import 'package:sltnoc/widgets/my_card.dart';
 
 class ClarityPage extends StatelessWidget {
   final String title;
@@ -59,79 +60,72 @@ class ClarityPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      MyCard(
+                      MyCard.list(
                         title: 'CLARITY NW FAULTS',
                         subtitle: 'Pending Network Faults',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'clarity nw faults',
                         onTap: () {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const ClarityNwFaultsPage(title: 'CLARITY NW FAULTS',)));
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'CEN-CSC-DATA',
                         subtitle: 'Pending Clarity Fault Dockets',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'cen csc data',
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscDataPage(title: 'CEN-CSC-DATA',)));
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'CEN-CSC-NW',
                         subtitle: 'Pending Clarity Fault Dockets',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'cen csc nw',
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscNwPage(title: 'CEN-CSC-NW',)));
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'CEN-CSC-CC',
                         subtitle: 'Pending Clarity Fault Dockets',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'cen csc cc',
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscCCPage(title: 'CEN-CSC-CC',)));
                         },
                       ),
                       //
-                      MyCard(
+                      MyCard.list(
                         title: 'CEN-CSC-MS',
                         subtitle: 'Pending Clarity Fault Dockets',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'cen csc ms',
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscmsPage(title: 'CEN-CSC-MS',)));
                         },
                       ),
                       //
-                      MyCard(
+                      MyCard.list(
                         title: 'WORK GROUPS',
                         subtitle: 'Pending Work Orders',
                         newSubtitle: 'Source: SLT NOC',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'work groups',
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const WorkGroupsPage()));
                         },
                       ),
-                      MyCard(
+                      MyCard.list(
                         title: 'SERVICE ORDER DETAILS',
                         subtitle: 'CCT Details',
                         newSubtitle: 'Source: Clarity',
                         borderColor: const Color(0xFF0056A2),
-                        page: 'serviceOrder',
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const ServiceOrderDetailsPage()));
