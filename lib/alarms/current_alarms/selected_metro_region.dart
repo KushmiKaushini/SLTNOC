@@ -102,7 +102,6 @@
 //   }
 // }
 //
-//
 // class MyCard extends StatelessWidget {
 //   final String title;
 //   final VoidCallback onTap;
@@ -186,6 +185,7 @@ import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/widgets/my_card.dart';
 
 class SelectedMetroRegionPage extends StatefulWidget {
   final String title;
@@ -344,8 +344,9 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
                               : ListView.builder(
                                   itemCount: provinces.length,
                                   itemBuilder: (context, index) {
-                                    return MyCard(
+                                    return MyCard.metro(
                                       title: provinces[index],
+                                      borderColor: const Color(0xFF0056A2),
                                       onTap: () {
                                         Navigator.push(
                                           context,
@@ -356,8 +357,8 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
                                           ),
                                         );
                                       },
-                                      borderColor: const Color(0xFF0056A2),
                                       height: 150,
+                                      forwardIconColor2: AppConfig.forwardIconColor2,
                                     );
                                   },
                                 ),
@@ -370,93 +371,5 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
         ],
       ),
     );
-  }
-}
-
-class MyCard extends StatelessWidget {
-  final String title;
-  final VoidCallback onTap;
-  final Color borderColor;
-  final double height;
-
-  const MyCard({
-    Key? key,
-    required this.title,
-    required this.onTap,
-    required this.borderColor,
-    required this.height,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    return InkWell(
-      onTap: onTap,
-      splashColor: Colors.white,
-      child: Card(
-        elevation: AppConfig.elevation,
-        margin: EdgeInsets.symmetric(vertical: AppConfig.heightBetweenCards),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConfig.cardBorderRadius),
-        ),
-        color: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(AppConfig.cardBackgroundImagePath),
-              fit: BoxFit.cover,
-            ),
-            borderRadius: BorderRadius.circular(AppConfig.cardBorderRadius),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppConfig.metroCardPadding),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildIcon(context),
-                const SizedBox(
-                    width: AppConfig.metroWidthBetweenIconAndContent),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                            fontSize: 0.042 *
-                                (MediaQuery.of(context).orientation ==
-                                        Orientation.portrait
-                                    ? screenWidth
-                                    : screenHeight),
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(AppConfig.forwardIcon,
-                    size: AppConfig.forwardIconSize,
-                    color: AppConfig.forwardIconColor2),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIcon(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    // Define the icon size
-    double iconSize = 0.08 *
-        (MediaQuery.of(context).orientation == Orientation.portrait
-            ? screenWidth
-            : screenHeight);
-    Color? iconColor = AppConfig.iconColor2;
-
-    return Icon(Icons.public, size: iconSize, color: iconColor);
   }
 }

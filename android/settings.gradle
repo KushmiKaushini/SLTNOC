@@ -33,7 +33,7 @@ gradle.beforeProject { project ->
         project.afterEvaluate {
             def androidExtension = project.extensions.findByName("android")
             if (androidExtension != null) {
-                androidExtension.compileSdkVersion = 35
+                androidExtension.compileSdkVersion = 36
             }
         }
     }

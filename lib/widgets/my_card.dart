@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import '../config/app_config.dart';
+import '../app_config.dart';
+import 'package:sltnoc/alarms/alarms_page.dart';
+import 'package:sltnoc/clarity_page.dart';
+import 'package:sltnoc/escalations_page.dart';
+import 'package:sltnoc/planOutages/plan_Outages.dart';
+import 'package:sltnoc/ai_chat_page.dart';
 
 /// Unified MyCard widget that replaces duplicate implementations across:
 /// - home_page.dart
@@ -80,15 +85,15 @@ class MyCard extends StatelessWidget {
   }) = _HomeCard;
 
   /// Factory for 'list' layout (horizontal row with icon, used in clarity_page.dart, escalations_page.dart)
-  factory MyCard.list({
-    Key? key,
-    required String title,
-    required String subtitle,
-    required String newSubtitle,
-    required Color borderColor,
-    required VoidCallback onTap,
-    int badgeCount = 0,
-  }) = _ListCard;
+    factory MyCard.list({
+      Key? key,
+      required String title,
+      required String subtitle,
+      required String newSubtitle,
+      required Color borderColor,
+      required VoidCallback onTap,
+      required int badgeCount,
+    }) = _ListCard;
 
   /// Factory for 'metro' layout (horizontal row, title only, used in alarms pages)
   factory MyCard.metro({
@@ -510,7 +515,7 @@ class _ListCard extends MyCard {
     required String newSubtitle,
     required Color borderColor,
     required VoidCallback onTap,
-    int badgeCount = 0,
+    required int badgeCount,
   }) : super(
           key: key,
           layout: 'list',
