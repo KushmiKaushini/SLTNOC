@@ -179,7 +179,8 @@ class _CurrentAlarmsPageState extends State<CurrentAlarmsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final useLocalServer = prefs.getBool('useLocalServer') ?? true;
-      final serverUrl = prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
+      final serverUrl =
+          prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
 
       if (useLocalServer) {
         final response = await http.get(
@@ -447,10 +448,10 @@ class _CurrentAlarmsPageState extends State<CurrentAlarmsPage> {
               borderRadius: BorderRadius.circular(AppConfig.tableBorderRadius),
               child: DataTable(
                 showCheckboxColumn: false,
-                dataRowColor: MaterialStateColor.resolveWith(
+                dataRowColor: WidgetStateColor.resolveWith(
                     (states) => AppConfig.tableRowColor),
                 columnSpacing: AppConfig.columnSpacing,
-                headingRowColor: MaterialStateColor.resolveWith(
+                headingRowColor: WidgetStateColor.resolveWith(
                     (states) => AppConfig.tableHeadingColor),
                 columns: [
                   DataColumn(

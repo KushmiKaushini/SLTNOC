@@ -500,10 +500,10 @@ class _CeaDetailsPageState extends State<CeaDetailsPage> {
             borderRadius: BorderRadius.circular(AppConfig.tableBorderRadius),
             child: DataTable(
               showCheckboxColumn: false,
-              dataRowColor: MaterialStateProperty.resolveWith(
+              dataRowColor: WidgetStateProperty.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: AppConfig.columnSpacing,
-              headingRowColor: MaterialStateProperty.resolveWith(
+              headingRowColor: WidgetStateProperty.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               dataRowMaxHeight: double.infinity,
               columns: [

@@ -11,13 +11,13 @@ import 'package:flutter/foundation.dart';
 import 'shared_state.dart';
 
 const List<String> _kChatFallbackUrls = [
-  'http://192.168.1.8:3000',      // Primary (from SharedPreferences)
-  'http://172.20.10.6:3000',      // Mobile hotspot
-  'http://192.168.1.7:3000',      // Alternate WiFi
-  'http://10.16.188.228:3000',    // Corporate network
-  'http://192.168.1.10:3000',     // Backup local
-  'http://10.0.2.2:3000',         // Android emulator
-  'http://127.0.0.1:3000',        // iOS Simulator / localhost
+  'http://192.168.1.8:3000', // Primary (from SharedPreferences)
+  'http://172.20.10.6:3000', // Mobile hotspot
+  'http://192.168.1.7:3000', // Alternate WiFi
+  'http://10.16.188.228:3000', // Corporate network
+  'http://192.168.1.10:3000', // Backup local
+  'http://10.0.2.2:3000', // Android emulator
+  'http://127.0.0.1:3000', // iOS Simulator / localhost
 ];
 const Duration _kConnectionAttemptTimeout = Duration(seconds: 5);
 
@@ -125,8 +125,7 @@ class AIChatPage extends StatefulWidget {
   State<AIChatPage> createState() => _AIChatPageState();
 }
 
-class _AIChatPageState extends State<AIChatPage>
-    with TickerProviderStateMixin {
+class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
   // Controllers
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -180,38 +179,38 @@ class _AIChatPageState extends State<AIChatPage>
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
-    @override
-    void initState() {
-      super.initState();
-      _messageController.addListener(_onTextChanged);
-      _headerGlowController =
-          AnimationController(vsync: this, duration: const Duration(seconds: 3))
-            ..repeat(reverse: true);
-      _headerGlowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
-        CurvedAnimation(parent: _headerGlowController, curve: Curves.easeInOut),
-      );
-    
-      // Set global flag to hide floating chat button while chat screen is open
-      isChatScreenOpen.value = true;
-    
-      _loadData();
-      _initSpeech();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _messageController.addListener(_onTextChanged);
+    _headerGlowController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 3))
+          ..repeat(reverse: true);
+    _headerGlowAnim = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _headerGlowController, curve: Curves.easeInOut),
+    );
 
-    @override
-    void dispose() {
-      _messageController.removeListener(_onTextChanged);
-      _messageController.dispose();
-      _scrollController.dispose();
-      _headerGlowController.dispose();
-      _speechToText.stop();
-      _flutterTts.stop();
-    
-      // Reset global flag when leaving chat screen
-      isChatScreenOpen.value = false;
-    
-      super.dispose();
-    }
+    // Set global flag to hide floating chat button while chat screen is open
+    isChatScreenOpen.value = true;
+
+    _loadData();
+    _initSpeech();
+  }
+
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _messageController.dispose();
+    _scrollController.dispose();
+    _headerGlowController.dispose();
+    _speechToText.stop();
+    _flutterTts.stop();
+
+    // Reset global flag when leaving chat screen
+    isChatScreenOpen.value = false;
+
+    super.dispose();
+  }
 
   // Proactive Alerts State
   Map<String, dynamic>? _criticalAlert;
@@ -228,8 +227,9 @@ class _AIChatPageState extends State<AIChatPage>
 
     if (sessionsJson != null) {
       final decoded = jsonDecode(sessionsJson) as List;
-      _sessions =
-          decoded.map((j) => ChatSession.fromJson(j as Map<String, dynamic>)).toList();
+      _sessions = decoded
+          .map((j) => ChatSession.fromJson(j as Map<String, dynamic>))
+          .toList();
     }
 
     if (_sessions.isEmpty) {
@@ -271,7 +271,8 @@ class _AIChatPageState extends State<AIChatPage>
 
     for (final uri in uris) {
       try {
-        final response = await http.get(uri).timeout(_kConnectionAttemptTimeout);
+        final response =
+            await http.get(uri).timeout(_kConnectionAttemptTimeout);
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data['success'] == true && data['alert'] != null) {
@@ -339,8 +340,8 @@ class _AIChatPageState extends State<AIChatPage>
       builder: (ctx) => AlertDialog(
         backgroundColor: _kSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Rename Session',
-            style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Rename Session', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -361,8 +362,8 @@ class _AIChatPageState extends State<AIChatPage>
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white54))),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Colors.white54))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _kAccent1),
             onPressed: () {
@@ -484,7 +485,8 @@ class _AIChatPageState extends State<AIChatPage>
 
     final conversationHistory = _messages
         .where((m) => m != userMsg && m != streamMsg)
-        .map((m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text})
+        .map(
+            (m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text})
         .toList();
 
     // Try fallback URLs (same pattern as ManualEscalationService)
@@ -521,7 +523,8 @@ class _AIChatPageState extends State<AIChatPage>
             'conversationHistory': conversationHistory,
           });
 
-        final response = await client.send(request).timeout(_kConnectionAttemptTimeout);
+        final response =
+            await client.send(request).timeout(_kConnectionAttemptTimeout);
         if (!mounted) return;
 
         if (response.statusCode == 200) {
@@ -589,7 +592,8 @@ class _AIChatPageState extends State<AIChatPage>
       _isStreaming = false;
       _isLoading = false;
     });
-    _showError('Connection error: ${lastError ?? 'All servers unreachable'}', retryPayload: text);
+    _showError('Connection error: ${lastError ?? 'All servers unreachable'}',
+        retryPayload: text);
   }
 
   /// Called when the user edits a previously sent message.
@@ -709,7 +713,8 @@ class _AIChatPageState extends State<AIChatPage>
           backgroundColor: _kAccent1,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -769,8 +774,8 @@ class _AIChatPageState extends State<AIChatPage>
               ),
               child: const Text(
                 '📱 On iPhone, use your laptop IP:\nhttp://192.168.x.x:3000\n\n💻 Find IP: ipconfig getifaddr en0',
-                style: TextStyle(
-                    fontSize: 12, color: Colors.white60, height: 1.5),
+                style:
+                    TextStyle(fontSize: 12, color: Colors.white60, height: 1.5),
               ),
             ),
             const SizedBox(height: 14),
@@ -782,8 +787,7 @@ class _AIChatPageState extends State<AIChatPage>
                 labelStyle: const TextStyle(color: Colors.white54),
                 hintText: 'http://192.168.1.x:3000',
                 hintStyle: const TextStyle(color: Colors.white30),
-                prefixIcon:
-                    const Icon(Icons.link, color: _kAccent2),
+                prefixIcon: const Icon(Icons.link, color: _kAccent2),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: _kBorder),
@@ -799,7 +803,8 @@ class _AIChatPageState extends State<AIChatPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child:
+                const Text('Cancel', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton.icon(
             icon: const Icon(Icons.save, size: 16),
@@ -973,7 +978,8 @@ class _AIChatPageState extends State<AIChatPage>
                             colors: [_kAccent1, _kAccent2]),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.add, color: Colors.white, size: 16),
+                      child:
+                          const Icon(Icons.add, color: Colors.white, size: 16),
                     ),
                     tooltip: 'New session',
                   ),
@@ -1015,16 +1021,14 @@ class _AIChatPageState extends State<AIChatPage>
                         session.name,
                         style: TextStyle(
                           color: isActive ? _kAccent1 : _kTextSec,
-                          fontWeight: isActive
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              isActive ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 14,
                         ),
                       ),
                       subtitle: Text(
                         '${session.messages.length} messages',
-                        style: const TextStyle(
-                            color: _kTextTer, fontSize: 11),
+                        style: const TextStyle(color: _kTextTer, fontSize: 11),
                       ),
                       onTap: () => _switchSession(session.id),
                       trailing: PopupMenuButton<String>(
@@ -1041,8 +1045,7 @@ class _AIChatPageState extends State<AIChatPage>
                             child: Row(children: [
                               Icon(Icons.edit, color: _kAccent2, size: 16),
                               SizedBox(width: 8),
-                              Text('Rename',
-                                  style: TextStyle(color: _kText)),
+                              Text('Rename', style: TextStyle(color: _kText)),
                             ]),
                           ),
                           if (_sessions.length > 1)
@@ -1211,8 +1214,7 @@ class _AIChatPageState extends State<AIChatPage>
           // Close
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded,
-                size: 20, color: _kTextTer),
+            icon: const Icon(Icons.close_rounded, size: 20, color: _kTextTer),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -1280,19 +1282,14 @@ class _AIChatPageState extends State<AIChatPage>
                 child: const Text(
                   'NOC AI Assistant',
                   style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: _kText),
+                      fontSize: 22, fontWeight: FontWeight.w700, color: _kText),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Ask me about network nodes, alarms, escalations, or system insights.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 13,
-                    color: _kTextSec,
-                    height: 1.5),
+                style: TextStyle(fontSize: 13, color: _kTextSec, height: 1.5),
               ),
               const SizedBox(height: 28),
               Wrap(
@@ -1303,8 +1300,8 @@ class _AIChatPageState extends State<AIChatPage>
                   return GestureDetector(
                     onTap: () => _sendMessage(p),
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: _kGlass,
                         borderRadius: BorderRadius.circular(20),
@@ -1339,9 +1336,8 @@ class _AIChatPageState extends State<AIChatPage>
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
-        crossAxisAlignment: message.isUser
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           GestureDetector(
             onLongPress: () => _showMessageActions(message),
@@ -1430,7 +1426,8 @@ class _AIChatPageState extends State<AIChatPage>
                                   ]
                                 : [
                                     BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.04),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.04),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2))
                                   ],
@@ -1445,12 +1442,14 @@ class _AIChatPageState extends State<AIChatPage>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.edit, size: 11, color: Colors.white70),
+                                const Icon(Icons.edit,
+                                    size: 11, color: Colors.white70),
                                 const SizedBox(width: 4),
                                 Text('Editing…',
                                     style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.white.withValues(alpha: 0.7)))
+                                        color: Colors.white
+                                            .withValues(alpha: 0.7)))
                               ],
                             ),
                           ),
@@ -1459,9 +1458,8 @@ class _AIChatPageState extends State<AIChatPage>
                           _buildTypingIndicator()
                         else ...[
                           MarkdownText(
-                            text: isStreaming
-                                ? '${message.text}▍'
-                                : message.text,
+                            text:
+                                isStreaming ? '${message.text}▍' : message.text,
                             style: TextStyle(
                               color: message.isUser
                                   ? Colors.white
@@ -1471,15 +1469,16 @@ class _AIChatPageState extends State<AIChatPage>
                               fontSize: 14,
                             ),
                           ),
-                          if (!message.isUser && message.text.isNotEmpty && !isStreaming)
+                          if (!message.isUser &&
+                              message.text.isNotEmpty &&
+                              !isStreaming)
                             _buildActionChips(message),
                         ],
                         // Error retry button
                         if (isError && message.retryPayload != null) ...[
                           const SizedBox(height: 10),
                           GestureDetector(
-                            onTap: () =>
-                                _retryMessage(message.retryPayload!),
+                            onTap: () => _retryMessage(message.retryPayload!),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
@@ -1543,7 +1542,9 @@ class _AIChatPageState extends State<AIChatPage>
                   _formatTimestamp(message.timestamp),
                   style: const TextStyle(fontSize: 10, color: Colors.white24),
                 ),
-                if (!message.isUser && message.text.isNotEmpty && !isStreaming) ...[
+                if (!message.isUser &&
+                    message.text.isNotEmpty &&
+                    !isStreaming) ...[
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => _speak(message),
@@ -1655,8 +1656,7 @@ class _AIChatPageState extends State<AIChatPage>
                           size: 14, color: _kAccent2),
                       const SizedBox(width: 6),
                       const Text('Editing message',
-                          style:
-                              TextStyle(color: _kAccent2, fontSize: 12)),
+                          style: TextStyle(color: _kAccent2, fontSize: 12)),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => setState(() {
@@ -1686,16 +1686,15 @@ class _AIChatPageState extends State<AIChatPage>
                       ),
                       child: TextField(
                         controller: _messageController,
-                        style: const TextStyle(
-                            color: _kText, fontSize: 14),
+                        style: const TextStyle(color: _kText, fontSize: 14),
                         maxLines: 4,
                         minLines: 1,
                         decoration: InputDecoration(
                           hintText: isEditing
                               ? 'Edit your message…'
                               : 'Ask the NOC AI…',
-                          hintStyle: const TextStyle(
-                              color: _kTextTer, fontSize: 14),
+                          hintStyle:
+                              const TextStyle(color: _kTextTer, fontSize: 14),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
@@ -1724,10 +1723,11 @@ class _AIChatPageState extends State<AIChatPage>
                   // Mic button
                   if (_isSpeechAvailable)
                     _circleButton(
-                      onTap: _isLoading || _isStreaming
-                          ? null
-                          : _toggleListening,
-                      icon: _isListening ? Icons.mic_off_rounded : Icons.mic_rounded,
+                      onTap:
+                          _isLoading || _isStreaming ? null : _toggleListening,
+                      icon: _isListening
+                          ? Icons.mic_off_rounded
+                          : Icons.mic_rounded,
                       color: _isListening ? _kError : Colors.white54,
                       bgColor: _isListening
                           ? _kError.withValues(alpha: 0.15)
@@ -1814,8 +1814,8 @@ class _AIChatPageState extends State<AIChatPage>
           const SizedBox(width: 6),
           GestureDetector(
             onTap: () => setState(() => _dismissAlertBanner = true),
-            child:
-                const Icon(Icons.close_rounded, color: Colors.white38, size: 18),
+            child: const Icon(Icons.close_rounded,
+                color: Colors.white38, size: 18),
           ),
         ],
       ),
@@ -2001,7 +2001,8 @@ class _AIChatPageState extends State<AIChatPage>
                       subtitle: 'Recurring node report',
                       onTap: () {
                         Navigator.pop(ctx);
-                        _sendMessage('Show recurring and high-risk fault nodes');
+                        _sendMessage(
+                            'Show recurring and high-risk fault nodes');
                       },
                     ),
                     _nocToolCard(
@@ -2088,8 +2089,8 @@ class _AIChatPageState extends State<AIChatPage>
                   Text(subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 10)),
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 10)),
                 ],
               ),
             ),
@@ -2385,16 +2386,15 @@ class MarkdownText extends StatelessWidget {
             children: [
               Text('• ',
                   style: TextStyle(
-                      fontSize: 14,
-                      color: style?.color ?? _kAccent2)),
+                      fontSize: 14, color: style?.color ?? _kAccent2)),
               Expanded(
                 child: RichText(
                   text: TextSpan(
                     children: _parseInline(itemText),
                     style: TextStyle(
                       fontSize: 14,
-                      color: style?.color ??
-                          Colors.white.withValues(alpha: 0.9),
+                      color:
+                          style?.color ?? Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ),
@@ -2414,16 +2414,15 @@ class MarkdownText extends StatelessWidget {
             children: [
               Text('$number ',
                   style: TextStyle(
-                      fontSize: 14,
-                      color: style?.color ?? _kAccent2)),
+                      fontSize: 14, color: style?.color ?? _kAccent2)),
               Expanded(
                 child: RichText(
                   text: TextSpan(
                     children: _parseInline(itemText),
                     style: TextStyle(
                       fontSize: 14,
-                      color: style?.color ??
-                          Colors.white.withValues(alpha: 0.9),
+                      color:
+                          style?.color ?? Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ),

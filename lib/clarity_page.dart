@@ -32,10 +32,20 @@ class ClarityPage extends StatelessWidget {
     double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        title:  Text(title, style: TextStyle(fontSize: 0.045 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight), color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(title,
+            style: TextStyle(
+                fontSize: 0.045 *
+                    (MediaQuery.of(context).orientation == Orientation.portrait
+                        ? screenWidth
+                        : screenHeight),
+                color: Colors.white,
+                fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: AppConfig.appBarBG,
-        toolbarHeight: 0.13 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight),
+        toolbarHeight: 0.13 *
+            (MediaQuery.of(context).orientation == Orientation.portrait
+                ? screenWidth
+                : screenHeight),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: const [
           SettingsButton(),
@@ -45,7 +55,8 @@ class ClarityPage extends StatelessWidget {
         // color: AppConfig.BodyBG, // Background color
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(AppConfig.bodyBackgroundImagePath), // Replace 'background_image.jpg' with your image path
+            image: AssetImage(AppConfig
+                .bodyBackgroundImagePath), // Replace 'background_image.jpg' with your image path
             fit: BoxFit.cover, // Adjust the fit as needed
           ),
         ),
@@ -67,7 +78,13 @@ class ClarityPage extends StatelessWidget {
                         borderColor: const Color(0xFF0056A2),
                         badgeCount: 0,
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ClarityNwFaultsPage(title: 'CLARITY NW FAULTS',)));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ClarityNwFaultsPage(
+                                        title: 'CLARITY NW FAULTS',
+                                      )));
                         },
                       ),
                       MyCard.list(
@@ -78,7 +95,12 @@ class ClarityPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscDataPage(title: 'CEN-CSC-DATA',)));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const cenCscDataPage(
+                                        title: 'CEN-CSC-DATA',
+                                      )));
                         },
                       ),
                       MyCard.list(
@@ -89,7 +111,12 @@ class ClarityPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscNwPage(title: 'CEN-CSC-NW',)));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const cenCscNwPage(
+                                        title: 'CEN-CSC-NW',
+                                      )));
                         },
                       ),
                       MyCard.list(
@@ -100,7 +127,12 @@ class ClarityPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscCCPage(title: 'CEN-CSC-CC',)));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const cenCscCCPage(
+                                        title: 'CEN-CSC-CC',
+                                      )));
                         },
                       ),
                       //
@@ -112,7 +144,12 @@ class ClarityPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const cenCscmsPage(title: 'CEN-CSC-MS',)));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const cenCscmsPage(
+                                        title: 'CEN-CSC-MS',
+                                      )));
                         },
                       ),
                       //
@@ -124,7 +161,11 @@ class ClarityPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const WorkGroupsPage()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const WorkGroupsPage()));
                         },
                       ),
                       MyCard.list(
@@ -135,7 +176,11 @@ class ClarityPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to WorkGroupsPage when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ServiceOrderDetailsPage()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ServiceOrderDetailsPage()));
                         },
                       ),
                     ],

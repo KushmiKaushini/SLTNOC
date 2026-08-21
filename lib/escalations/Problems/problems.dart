@@ -198,10 +198,10 @@ class _problemsPageState extends State<problemsPage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5.0),
             child: DataTable(
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: 16.0,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               // dataRowHeight: 130, // Set the minimum height for the DataRow
               dataRowMaxHeight: double.infinity,

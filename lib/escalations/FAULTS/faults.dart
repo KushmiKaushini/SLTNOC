@@ -243,10 +243,10 @@ class _faultsPageState extends State<faultsPage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5.0),
             child: DataTable(
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: 16.0,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               // dataRowHeight: 150, // Set the minimum height for the DataRow
               dataRowMaxHeight: double.infinity,

@@ -1,5 +1,5 @@
 {
   "java.configuration.updateBuildConfiguration": "interactive",
-  "cmake.sourceDirectory": "D:/SLTNOC/SLTNOC/windows/flutter",
+  "cmake.sourceDirectory": "D:/SLT_Projects/SLTNOC/windows",
   "dart.flutterSdkPath": ".fvm/versions/3.19.6"
 }

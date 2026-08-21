@@ -31,15 +31,25 @@ class ErrorBottomSheet extends StatelessWidget {
             children: [
               Icon(Icons.warning, color: Colors.red, size: 30),
               SizedBox(width: 10),
-              Text('Error', style: TextStyle(fontSize: 0.05 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight), fontWeight: FontWeight.bold, color: Colors.black)),
+              Text('Error',
+                  style: TextStyle(
+                      fontSize: 0.05 *
+                          (MediaQuery.of(context).orientation ==
+                                  Orientation.portrait
+                              ? screenWidth
+                              : screenHeight),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
               Spacer(), // Add a spacer to push the close button to the right corner
-              GestureDetector( // Use GestureDetector for handling tap events
+              GestureDetector(
+                // Use GestureDetector for handling tap events
                 onTap: () {
                   Navigator.pop(context); // Close the bottom sheet
                 },
                 child: Icon(
                   Icons.cancel, // Use cancel icon
-                  color: Colors.grey.shade400, // Adjust the icon color as needed
+                  color:
+                      Colors.grey.shade400, // Adjust the icon color as needed
                   // color: Colors.red,
                   size: 20, // Adjust the icon size as needed
                 ),
@@ -51,7 +61,10 @@ class ErrorBottomSheet extends StatelessWidget {
           Text(
             'No Geo Coordinates found!',
             style: TextStyle(
-              fontSize: 0.037 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight),
+              fontSize: 0.037 *
+                  (MediaQuery.of(context).orientation == Orientation.portrait
+                      ? screenWidth
+                      : screenHeight),
               fontWeight: FontWeight.w500,
               color: Colors.black,
             ),
@@ -78,12 +91,27 @@ Widget _buildText2(context, String label, String value) {
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 0.037 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight), fontWeight: FontWeight.bold, color: Colors.black)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 0.037 *
+                      (MediaQuery.of(context).orientation ==
+                              Orientation.portrait
+                          ? screenWidth
+                          : screenHeight),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black)),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
               value,
-              style: TextStyle(fontSize: 0.037 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight), fontWeight: FontWeight.w500, color: Color(0xFF0056A2)),
+              style: TextStyle(
+                  fontSize: 0.037 *
+                      (MediaQuery.of(context).orientation ==
+                              Orientation.portrait
+                          ? screenWidth
+                          : screenHeight),
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF0056A2)),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             ),

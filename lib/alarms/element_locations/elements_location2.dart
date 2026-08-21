@@ -178,10 +178,10 @@ class _ElementsLocationPage2State extends State<ElementsLocationPage2> {
             borderRadius: BorderRadius.circular(AppConfig.tableBorderRadius),
             child: DataTable(
               showCheckboxColumn: false,
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: AppConfig.columnSpacing,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               columns: [
                 DataColumn(

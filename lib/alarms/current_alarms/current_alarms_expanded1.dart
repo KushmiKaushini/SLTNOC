@@ -175,8 +175,6 @@ import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CurrentAlarmsExpandedPage1 extends StatefulWidget {
   final String name;
@@ -338,10 +336,10 @@ class _CurrentAlarmsExpandedPage1State
             borderRadius: BorderRadius.circular(AppConfig.tableBorderRadius),
             child: DataTable(
               showCheckboxColumn: false,
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: AppConfig.columnSpacing,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               columns: [
                 DataColumn(
