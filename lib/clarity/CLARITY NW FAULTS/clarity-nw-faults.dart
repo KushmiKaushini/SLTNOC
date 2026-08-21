@@ -225,7 +225,7 @@ class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
         border: Border.all(color: Colors.blueGrey[300]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
+            color: Colors.grey.withValues(alpha: 0.5),
             spreadRadius: 1,
             blurRadius: 3,
             offset: Offset(0, 2), // changes position of shadow
@@ -268,7 +268,7 @@ class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
         border: Border.all(color: Colors.blueGrey[300]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
+            color: Colors.grey.withValues(alpha: 0.5),
             spreadRadius: 1,
             blurRadius: 3,
             offset: Offset(0, 2), // changes position of shadow
@@ -350,10 +350,10 @@ class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5.0),
             child: DataTable(
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: 16.0,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               // dataRowHeight: 130, // Set the minimum height for the DataRow
               dataRowMaxHeight: double.infinity,

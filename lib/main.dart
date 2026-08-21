@@ -23,7 +23,8 @@ class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // Global navigator key so the floating button can navigate from any context
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   // Route observer so overlays can react to navigation events
   static final RouteObserver<ModalRoute<void>> routeObserver =
@@ -201,7 +202,7 @@ class _ChatButtonOverlayState extends State<_ChatButtonOverlay>
   @override
   Widget build(BuildContext context) {
     if (!_isLoggedIn) return const SizedBox.shrink();
-    
+
     // Also listen to the global chat screen flag to hide button when chat is open
     return ValueListenableBuilder<bool>(
       valueListenable: isChatScreenOpen,

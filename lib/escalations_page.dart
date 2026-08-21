@@ -402,7 +402,7 @@ class _ManualEscalationFormPageState extends State<ManualEscalationFormPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: _inputDecoration(label),
         items: items
             .map((item) => DropdownMenuItem(value: item, child: Text(item)))

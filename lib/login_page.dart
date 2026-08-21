@@ -406,9 +406,7 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                       padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth < 600
-                            ? screenWidth * 0.2
-                            : 50,
+                        horizontal: screenWidth < 600 ? screenWidth * 0.2 : 50,
                         vertical: 10.0,
                       ),
                     ),

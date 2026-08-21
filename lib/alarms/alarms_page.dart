@@ -27,10 +27,20 @@ class AlarmsPage extends StatelessWidget {
     double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        title:  Text(title, style: TextStyle(fontSize: 0.045 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight), color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(title,
+            style: TextStyle(
+                fontSize: 0.045 *
+                    (MediaQuery.of(context).orientation == Orientation.portrait
+                        ? screenWidth
+                        : screenHeight),
+                color: Colors.white,
+                fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: AppConfig.appBarBG,
-        toolbarHeight: 0.13 * (MediaQuery.of(context).orientation == Orientation.portrait ? screenWidth : screenHeight),
+        toolbarHeight: 0.13 *
+            (MediaQuery.of(context).orientation == Orientation.portrait
+                ? screenWidth
+                : screenHeight),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: const [
           SettingsButton(),
@@ -40,7 +50,8 @@ class AlarmsPage extends StatelessWidget {
         // color: AppConfig.BodyBG, // Background color
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(AppConfig.bodyBackgroundImagePath), // Replace 'background_image.jpg' with your image path
+            image: AssetImage(AppConfig
+                .bodyBackgroundImagePath), // Replace 'background_image.jpg' with your image path
             fit: BoxFit.cover, // Adjust the fit as needed
           ),
         ),
@@ -63,7 +74,11 @@ class AlarmsPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to the Current Alarms Page when the alarms card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const AlarmsOptionsPage()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AlarmsOptionsPage()));
                         },
                       ),
                       MyCard.list(
@@ -74,7 +89,11 @@ class AlarmsPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to the Element Locations Page when the card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ElementsLocationPage()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ElementsLocationPage()));
                         },
                       ),
                       MyCard.list(
@@ -85,7 +104,11 @@ class AlarmsPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to the Current Alarms Page when the alarms card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const UpdateElementsLocationPage()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const UpdateElementsLocationPage()));
                         },
                       ),
                       MyCard.list(
@@ -96,7 +119,11 @@ class AlarmsPage extends StatelessWidget {
                         badgeCount: 0,
                         onTap: () {
                           // Navigate to the Current Alarms Page when the alarms card is clicked
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const elementsMapPage()));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const elementsMapPage()));
                         },
                       ),
                     ],

@@ -187,9 +187,7 @@ class _ElementsLocationPage3State extends State<ElementsLocationPage3> {
             ? CustomLoadingIndicator()
             : _hasCoordinates
                 ? _buildMap()
-                : _data != null
-                    ? const Center(child: CircularProgressIndicator())
-                    : const Center(child: Text('No data available')),
+                : const Center(child: CircularProgressIndicator()),
       ),
     );
   }
@@ -370,8 +368,8 @@ class _ElementsLocationPage3State extends State<ElementsLocationPage3> {
             },
             style: ButtonStyle(
               backgroundColor:
-                  MaterialStateProperty.all<Color>(Colors.grey[800]!),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  WidgetStateProperty.all<Color>(Colors.grey[800]!),
+              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),
@@ -397,8 +395,8 @@ class _ElementsLocationPage3State extends State<ElementsLocationPage3> {
             },
             style: ButtonStyle(
               backgroundColor:
-                  MaterialStateProperty.all<Color>(Colors.grey[800]!),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  WidgetStateProperty.all<Color>(Colors.grey[800]!),
+              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5.0),
                 ),

@@ -240,7 +240,7 @@ class _NodeAlarmsPageState extends State<NodeAlarmsPage> {
             showCheckboxColumn: false,
             columnSpacing: 16.0,
             headingRowColor:
-                MaterialStateColor.resolveWith((states) => Colors.grey[200]!),
+                WidgetStateColor.resolveWith((states) => Colors.grey[200]!),
             columns: const [
               DataColumn(
                   label: Text('Node',

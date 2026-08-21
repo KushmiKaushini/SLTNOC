@@ -183,10 +183,10 @@ class _WorkGroupsPage2State extends State<WorkGroupsPage2> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppConfig.tableBorderRadius),
             child: DataTable(
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: AppConfig.columnSpacing,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               // dataRowHeight: 140, // Set the minimum height for the DataRow
               dataRowMaxHeight: double.infinity,

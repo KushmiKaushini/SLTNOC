@@ -192,10 +192,10 @@ class _plannedEventsPageState extends State<plannedEventsPage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5.0),
             child: DataTable(
-              dataRowColor: MaterialStateColor.resolveWith(
+              dataRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableRowColor),
               columnSpacing: AppConfig.columnSpacing,
-              headingRowColor: MaterialStateColor.resolveWith(
+              headingRowColor: WidgetStateColor.resolveWith(
                   (states) => AppConfig.tableHeadingColor),
               // dataRowHeight: 130, // Set the minimum height for the DataRow
               dataRowMaxHeight: double.infinity,

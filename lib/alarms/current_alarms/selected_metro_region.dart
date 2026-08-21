@@ -212,7 +212,8 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final useLocalServer = prefs.getBool('useLocalServer') ?? true;
-      final serverUrl = prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
+      final serverUrl =
+          prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
 
       if (useLocalServer) {
         final response = await http.get(
@@ -358,7 +359,8 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
                                         );
                                       },
                                       height: 150,
-                                      forwardIconColor2: AppConfig.forwardIconColor2,
+                                      forwardIconColor2:
+                                          AppConfig.forwardIconColor2,
                                     );
                                   },
                                 ),

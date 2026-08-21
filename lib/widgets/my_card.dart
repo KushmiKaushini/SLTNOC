@@ -85,15 +85,15 @@ class MyCard extends StatelessWidget {
   }) = _HomeCard;
 
   /// Factory for 'list' layout (horizontal row with icon, used in clarity_page.dart, escalations_page.dart)
-    factory MyCard.list({
-      Key? key,
-      required String title,
-      required String subtitle,
-      required String newSubtitle,
-      required Color borderColor,
-      required VoidCallback onTap,
-      required int badgeCount,
-    }) = _ListCard;
+  factory MyCard.list({
+    Key? key,
+    required String title,
+    required String subtitle,
+    required String newSubtitle,
+    required Color borderColor,
+    required VoidCallback onTap,
+    required int badgeCount,
+  }) = _ListCard;
 
   /// Factory for 'metro' layout (horizontal row, title only, used in alarms pages)
   factory MyCard.metro({
@@ -333,8 +333,8 @@ class MyCard extends StatelessWidget {
                 ),
                 if (badgeCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(12),
@@ -407,8 +407,7 @@ class MyCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                    AppConfig.forwardIcon,
+                Icon(AppConfig.forwardIcon,
                     size: AppConfig.forwardIconSize,
                     color: forwardIconColor2 ??
                         forwardIconColor ??
@@ -476,9 +475,10 @@ class MyCard extends StatelessWidget {
 
     return Icon(
       iconData,
-      size: 0.06 * (MediaQuery.of(context).orientation == Orientation.portrait
-          ? screenWidth
-          : screenHeight),
+      size: 0.06 *
+          (MediaQuery.of(context).orientation == Orientation.portrait
+              ? screenWidth
+              : screenHeight),
       color: iconColor,
     );
   }
