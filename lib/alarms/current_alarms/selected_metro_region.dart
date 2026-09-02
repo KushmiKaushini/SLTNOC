@@ -213,7 +213,7 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
       final prefs = await SharedPreferences.getInstance();
       final useLocalServer = prefs.getBool('useLocalServer') ?? true;
       final serverUrl =
-          prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
+          prefs.getString('serverUrl') ?? AppConfig.apiBaseUrl;
 
       if (useLocalServer) {
         final response = await http.get(

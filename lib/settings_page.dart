@@ -32,7 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final useLocalServerStr = await storage.read('useLocalServer');
     _useLocalServer = useLocalServerStr == 'true';
     _urlController.text =
-        await storage.read('serverUrl') ?? 'http://192.168.1.8:3000';
+        await storage.read('serverUrl') ?? AppConfig.apiBaseUrl;
   }
 
   Future<void> _saveSettings() async {

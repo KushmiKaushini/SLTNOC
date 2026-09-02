@@ -50,7 +50,7 @@ const dbConfig = require('./dbConfig'); // Importing the DB config file
 router.get('/data/:province', async (req, res) => {
   try {
       // Connect to MS SQL Server
-      await sql.connect(dbConfig);
+      await sql.connect();
 
       // Extract the province parameter from the request
       const province = req.params.province;

@@ -15,6 +15,17 @@ class AppConfig {
       15.0; // Padding of the pages which have TABLES
   static const String bodyBackgroundImagePath = 'assets/appbarbg2.png';
 
+  // API Configuration
+  static String get apiBaseUrl {
+    // Try to get from environment variable (--dart-define)
+    String envUrl = String.fromEnvironment('API_BASE_URL');
+    if (envUrl.isNotEmpty) {
+      return envUrl;
+    }
+    // Fallback to default Azure URL
+    return 'https://sltnoc-api.azurewebsites.net';
+  }
+
   // Card
   static const double homePageCardPadding = 15.0; // Padding
   static const double cardPadding = 15.0; // Padding

@@ -10,15 +10,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/foundation.dart';
 import 'shared_state.dart';
 
-const List<String> _kChatFallbackUrls = [
-  'http://192.168.1.8:3000', // Primary (from SharedPreferences)
-  'http://172.20.10.6:3000', // Mobile hotspot
-  'http://192.168.1.7:3000', // Alternate WiFi
-  'http://10.16.188.228:3000', // Corporate network
-  'http://192.168.1.10:3000', // Backup local
-  'http://10.0.2.2:3000', // Android emulator
-  'http://127.0.0.1:3000', // iOS Simulator / localhost
-];
+const String _kChatFallbackUrl = 'https://sltnoc-api.azurewebsites.net';
 const Duration _kConnectionAttemptTimeout = Duration(seconds: 5);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -289,10 +281,9 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
       }
     } catch (_) {}
 
-    // 2. Then try fallback URLs
-    for (final baseUrl in _kChatFallbackUrls) {
-      final trimmed = baseUrl.trim();
-      if (trimmed.isEmpty || !seen.add(trimmed)) continue;
+    // 2. Then try fallback URL
+    final trimmed = _kChatFallbackUrl.trim();
+    if (trimmed.isNotEmpty && seen.add(trimmed)) {
       uris.add(Uri.parse('$trimmed/api/critical-alerts'));
     }
 
@@ -526,10 +517,9 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
       }
     } catch (_) {}
 
-    // 2. Then try fallback URLs
-    for (final baseUrl in _kChatFallbackUrls) {
-      final trimmed = baseUrl.trim();
-      if (trimmed.isEmpty || !seen.add(trimmed)) continue;
+    // 2. Then try fallback URL
+    final trimmed = _kChatFallbackUrl.trim();
+    if (trimmed.isNotEmpty && seen.add(trimmed)) {
       uris.add(Uri.parse('$trimmed/api/chat-stream'));
     }
 

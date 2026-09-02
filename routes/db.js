@@ -4,6 +4,16 @@
 
 const mssql = require('mssql');
 const { mockFaults, mockEscalationsAuto } = require('./mockDbData');
+const { DefaultAzureCredential } = require("@azure/identity");
+const { SecretClient } = require("@azure/keyvault-secrets");
+
+// Azure Key Vault configuration
+const keyVaultName = process.env.KEY_VAULT_NAME || '';
+const keyVaultUri = keyVaultName ? `https://${keyVaultName}.vault.azure.net/` : null;
+
+// Cache for SQL Server credentials to avoid fetching on every connection
+let sqlCredentialsCache = null;
+let credentialsFetchPromise = null;
 
 let isConnected = false;
 let useMock = false;
@@ -27,6 +37,99 @@ function getDurationHours(faultTimeStr) {
   const faultTime = new Date(faultTimeStr);
   const diffMs = Date.now() - faultTime.getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+}
+
+// Async function to fetch SQL Server credentials from Azure Key Vault
+async function getSqlCredentialsFromKeyVault() {
+  // Return cached credentials if available
+  if (sqlCredentialsCache) {
+    return sqlCredentialsCache;
+  }
+
+  // If we're already fetching credentials, return the same promise
+  if (credentialsFetchPromise) {
+    return credentialsFetchPromise;
+  }
+
+  // Start fetching credentials
+  credentialsFetchPromise = (async () => {
+    // If Key Vault is not configured, fall back to environment variables
+    if (!keyVaultUri) {
+      return {
+        user: process.env.DB_USER || 'sa',
+        password: process.env.DB_PASSWORD || '',
+        server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
+        database: process.env.DB_DATABASE || 'TMS',
+        options: {
+          trustedconnection: false,
+          enableArithAbort: true,
+          encrypt: true, // Always encrypt for Azure SQL
+          trustServerCertificate: false, // Don't trust self-signed certs in production
+          instancename: process.env.DB_INSTANCE || 'SQLEXPRESS',
+          port: Number(process.env.DB_PORT || 1433),
+        },
+      };
+    }
+
+    try {
+      const credential = new DefaultAzureCredential();
+      const client = new SecretClient(keyVaultUri, credential);
+
+      // Fetch secrets from Key Vault
+      const [dbUserSecret, dbPasswordSecret, dbServerSecret, dbDatabaseSecret, dbInstanceSecret, dbPortSecret] = await Promise.all([
+        client.getSecret("DB-User"),
+        client.getSecret("DB-Password"),
+        client.getSecret("DB-Server"),
+        client.getSecret("DB-Database"),
+        client.getSecret("DB-Instance"),
+        client.getSecret("DB-Port")
+      ]);
+
+      const credentials = {
+        user: dbUserSecret.value,
+        password: dbPasswordSecret.value,
+        server: dbServerSecret.value,
+        database: dbDatabaseSecret.value,
+        options: {
+          trustedconnection: false,
+          enableArithAbort: true,
+          encrypt: true, // Always encrypt for Azure SQL
+          trustServerCertificate: false, // Don't trust self-signed certs in production
+          instancename: dbInstanceSecret.value,
+          port: Number(dbPortSecret.value),
+        },
+      };
+
+      // Cache the credentials
+      sqlCredentialsCache = credentials;
+      return credentials;
+    } catch (error) {
+      console.warn('Failed to fetch SQL Server credentials from Azure Key Vault:', error.message);
+      console.warn('Falling back to environment variables for SQL Server configuration');
+
+      // Fall back to environment variables if Key Vault fails
+      const credentials = {
+        user: process.env.DB_USER || 'sa',
+        password: process.env.DB_PASSWORD || '',
+        server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
+        database: process.env.DB_DATABASE || 'TMS',
+        options: {
+          trustedconnection: false,
+          enableArithAbort: true,
+          encrypt: true, // Always encrypt for Azure SQL
+          trustServerCertificate: false, // Don't trust self-signed certs in production
+          instancename: process.env.DB_INSTANCE || 'SQLEXPRESS',
+          port: Number(process.env.DB_PORT || 1433),
+        },
+      };
+
+      // Cache the fallback credentials
+      sqlCredentialsCache = credentials;
+      return credentials;
+    }
+  })();
+
+  return credentialsFetchPromise;
 }
 
 // Mock query processor
@@ -314,7 +417,12 @@ const dbWrapper = {
 
     try {
       console.log('🔌 Connecting to MS SQL Server database...');
-      const realPool = await mssql.connect(config);
+
+      // Fetch SQL Server credentials from Azure Key Vault or environment variables
+      const sqlCredentials = await getSqlCredentialsFromKeyVault();
+
+      // Connect using the fetched credentials
+      const realPool = await mssql.connect(sqlCredentials);
       isConnected = true;
       useMock = false;
       activePool = new PoolWrapper(realPool);
@@ -343,6 +451,34 @@ const dbWrapper = {
   // Export Request class
   Request: MockRequest,
 
+  async connect() {
+    if (isConnected && activePool) {
+      return activePool;
+    }
+
+    try {
+      console.log('🔌 Connecting to MS SQL Server database...');
+
+      // Fetch SQL Server credentials from Azure Key Vault or environment variables
+      const sqlCredentials = await getSqlCredentialsFromKeyVault();
+
+      // Connect using the fetched credentials
+      const realPool = await mssql.connect(sqlCredentials);
+      isConnected = true;
+      useMock = false;
+      activePool = new PoolWrapper(realPool);
+      console.log('✅ MS SQL Server connected successfully!');
+      return activePool;
+    } catch (err) {
+      console.warn(`⚠️ MS SQL Server connection failed: ${err.message}`);
+      console.warn('⚡ Initializing SLTNOC transparent Mock Database fallback.');
+      isConnected = true;
+      useMock = true;
+      activePool = new PoolWrapper(null);
+      return activePool;
+    }
+  },
+
   // Direct query runner
   async query(queryStr, ...args) {
     if (activePool) {
@@ -352,7 +488,9 @@ const dbWrapper = {
       return { recordset: processMockQuery(queryStr) };
     }
     try {
-      return await mssql.query(queryStr, ...args);
+      // Fetch SQL Server credentials from Azure Key Vault or environment variables
+      const sqlCredentials = await getSqlCredentialsFromKeyVault();
+      return await mssql.query(sqlCredentials, queryStr, ...args);
     } catch (err) {
       console.warn(`[Real DB Query Failed, falling back to mock]: ${err.message}`);
       useMock = true;

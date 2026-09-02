@@ -10,6 +10,8 @@ const nodeDetails = require('./routes/nodeDetails');
 const manualEscalations = require('./routes/manualEscalations');
 const { Ollama } = require('ollama');
 const aiTools = require('./routes/aiTools');
+const { DefaultAzureCredential } = require("@azure/identity");
+const { SecretClient } = require("@azure/keyvault-secrets");
 
 const app = express();
 
@@ -19,6 +21,80 @@ let criticalAlertsCache = {
   timestamp: 0,
   ttl: 45000 // 45 seconds
 };
+
+// Azure Key Vault configuration
+const keyVaultName = process.env.KEY_VAULT_NAME || '';
+const keyVaultUri = keyVaultName ? `https://${keyVaultName}.vault.azure.net/` : null;
+
+// Function to fetch SQL Server credentials from Azure Key Vault
+async function getSqlCredentialsFromKeyVault() {
+  // If Key Vault is not configured, fall back to environment variables
+  if (!keyVaultUri) {
+    return {
+      user: process.env.DB_USER || 'sa',
+      password: process.env.DB_PASSWORD || '',
+      server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
+      database: process.env.DB_DATABASE || 'TMS',
+      options: {
+        trustedconnection: false,
+        enableArithAbort: true,
+        encrypt: true, // Always encrypt for Azure SQL
+        trustServerCertificate: false, // Don't trust self-signed certs in production
+        instancename: process.env.DB_INSTANCE || 'SQLEXPRESS',
+        port: Number(process.env.DB_PORT || 1433),
+      },
+    };
+  }
+
+  try {
+    const credential = new DefaultAzureCredential();
+    const client = new SecretClient(keyVaultUri, credential);
+
+    // Fetch secrets from Key Vault
+    const [dbUserSecret, dbPasswordSecret, dbServerSecret, dbDatabaseSecret, dbInstanceSecret, dbPortSecret] = await Promise.all([
+      client.getSecret("DB-User"),
+      client.getSecret("DB-Password"),
+      client.getSecret("DB-Server"),
+      client.getSecret("DB-Database"),
+      client.getSecret("DB-Instance"),
+      client.getSecret("DB-Port")
+    ]);
+
+    return {
+      user: dbUserSecret.value,
+      password: dbPasswordSecret.value,
+      server: dbServerSecret.value,
+      database: dbDatabaseSecret.value,
+      options: {
+        trustedconnection: false,
+        enableArithAbort: true,
+        encrypt: true, // Always encrypt for Azure SQL
+        trustServerCertificate: false, // Don't trust self-signed certs in production
+        instancename: dbInstanceSecret.value,
+        port: Number(dbPortSecret.value),
+      },
+    };
+  } catch (error) {
+    console.warn('Failed to fetch SQL Server credentials from Azure Key Vault:', error.message);
+    console.warn('Falling back to environment variables for SQL Server configuration');
+
+    // Fall back to environment variables if Key Vault fails
+    return {
+      user: process.env.DB_USER || 'sa',
+      password: process.env.DB_PASSWORD || '',
+      server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS',
+      database: process.env.DB_DATABASE || 'TMS',
+      options: {
+        trustedconnection: false,
+        enableArithAbort: true,
+        encrypt: true, // Always encrypt for Azure SQL
+        trustServerCertificate: false, // Don't trust self-signed certs in production
+        instancename: process.env.DB_INSTANCE || 'SQLEXPRESS',
+        port: Number(process.env.DB_PORT || 1433),
+      },
+    };
+  }
+}
 
 // CORS middleware
 app.use(cors());
