@@ -213,14 +213,26 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
   }
 
   // Proactive Alerts State
-  Map<String, dynamic>? _criticalAlert;
-  bool _dismissAlertBanner = false;
+    Map<String, dynamic>? _criticalAlert;
+    bool _dismissAlertBanner = false;
+    DateTime? _criticalAlertLastFetched;
+    static const Duration _criticalAlertCacheTTL = Duration(seconds: 45);
 
   // ── Persistence ──────────────────────────────────────────────────────────────
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    _serverUrl = prefs.getString('serverUrl') ?? 'http://192.168.1.8:3000';
+    String? savedUrl = prefs.getString('serverUrl');
+    if (savedUrl != null && savedUrl.trim().isNotEmpty) {
+      final Uri uri = Uri.parse(savedUrl.trim());
+      final String cleanUrl = uri.replace(userInfo: null).toString();
+      if (cleanUrl != savedUrl.trim()) {
+        await prefs.setString('serverUrl', cleanUrl);
+      }
+      _serverUrl = cleanUrl;
+    } else {
+      _serverUrl = 'http://192.168.1.8:3000';
+    }
 
     final sessionsJson = prefs.getString('chat_sessions');
     final activeId = prefs.getString('active_session_id');
@@ -246,6 +258,14 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
   }
 
   Future<void> _fetchCriticalAlerts() async {
+    // Check cache: if we have a recent critical alert, use it and return.
+    final now = DateTime.now();
+    if (_criticalAlert != null &&
+        _criticalAlertLastFetched != null &&
+        now.difference(_criticalAlertLastFetched!) < _criticalAlertCacheTTL) {
+      return;
+    }
+
     // Try fallback URLs (same pattern as ManualEscalationService)
     final seen = <String>{};
     final List<Uri> uris = [];
@@ -279,6 +299,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
             if (!mounted) return;
             setState(() {
               _criticalAlert = data['alert'] as Map<String, dynamic>;
+              _criticalAlertLastFetched = DateTime.now();
             });
             return; // Success - exit the fallback loop
           }
@@ -816,16 +837,39 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
             onPressed: () async {
               final newUrl = controller.text.trim();
               if (newUrl.isNotEmpty) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setString('serverUrl', newUrl);
-                setState(() => _serverUrl = newUrl);
-                Navigator.pop(ctx);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Connected to $newUrl'),
-                    backgroundColor: _kGreen,
-                    duration: const Duration(seconds: 2),
-                  ));
+                try {
+                  final Uri uri = Uri.parse(newUrl);
+                  final String cleanUrl = uri.replace(userInfo: null).toString();
+                  final bool hadCredentials = uri.userInfo.isNotEmpty;
+
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('serverUrl', cleanUrl);
+                  setState(() => _serverUrl = cleanUrl);
+                  Navigator.pop(ctx);
+                  if (mounted) {
+                    String message;
+                    Color color;
+                    if (hadCredentials) {
+                      message = 'Credentials removed for security. Only the base URL is stored.';
+                      color = _kAccent1;
+                    } else {
+                      message = 'Connected to $cleanUrl';
+                      color = _kGreen;
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(message),
+                      backgroundColor: color,
+                      duration: const Duration(seconds: 2),
+                    ));
+                  }
+                } on FormatException catch (_) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Invalid URL'),
+                      backgroundColor: _kError,
+                      duration: const Duration(seconds: 2),
+                    ));
+                  }
                 }
               }
             },
