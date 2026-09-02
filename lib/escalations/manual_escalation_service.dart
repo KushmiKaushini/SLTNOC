@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:sltnoc/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 import 'manual_escalation_queue.dart';
 
 const String manualEscalationApiBaseUrl = String.fromEnvironment(
@@ -117,8 +117,8 @@ class ManualEscalationService {
     final List<Uri> list = [];
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedUrl = prefs.getString('serverUrl');
+      final storage = SecureStorageService();
+      final savedUrl = await storage.read('serverUrl');
       if (savedUrl != null && savedUrl.trim().isNotEmpty) {
         final trimmed = savedUrl.trim();
         if (seen.add(trimmed)) {

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 import 'manual_escalation_service.dart';
 
 class ManualEscalationQueue {
@@ -10,26 +10,26 @@ class ManualEscalationQueue {
   factory ManualEscalationQueue() => _instance;
   ManualEscalationQueue._internal();
 
-  /// Load the queue from SharedPreferences.
+  /// Load the queue from secure storage.
   Future<List<ManualEscalation>> loadQueue() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? jsonStrings = prefs.getStringList(_queueKey);
-    if (jsonStrings == null || jsonStrings.isEmpty) {
+    final storage = SecureStorageService();
+    final jsonString = await storage.read(_queueKey);
+    if (jsonString == null) {
       return [];
     }
-    return jsonStrings
-        .map((jsonString) => ManualEscalation.fromJson(
-            jsonDecode(jsonString) as Map<String, dynamic>))
+    final List<dynamic> decoded = jsonDecode(jsonString);
+    return decoded
+        .map((e) => ManualEscalation.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  /// Save the queue to SharedPreferences.
+  /// Save the queue to secure storage.
   Future<void> saveQueue(List<ManualEscalation> queue) async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> jsonStrings = queue
-        .map((esc) => jsonEncode(esc.toJson()))
-        .toList();
-    await prefs.setStringList(_queueKey, jsonStrings);
+    final storage = SecureStorageService();
+    final List<Map<String, dynamic>> jsonObjects =
+        queue.map((esc) => esc.toJson()).toList();
+    final jsonString = jsonEncode(jsonObjects);
+    await storage.write(_queueKey, jsonString);
   }
 
   /// Add an escalation to the queue.
