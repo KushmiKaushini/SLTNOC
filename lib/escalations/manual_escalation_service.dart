@@ -8,19 +8,12 @@ import 'manual_escalation_queue.dart';
 
 const String manualEscalationApiBaseUrl = String.fromEnvironment(
   'MANUAL_ESCALATION_API_BASE_URL',
-  defaultValue: 'http://192.168.1.8:3000',
+  defaultValue: 'https://sltnoc-api.azurewebsites.net',
 );
 
-const List<String> _fallbackApiBaseUrls = [
-  'http://192.168.1.8:3000',
-  'http://172.20.10.6:3000',
-  'http://192.168.1.7:3000',
-  'http://10.16.188.228:3000',
-  'http://192.168.1.10:3000',
-  manualEscalationApiBaseUrl,
-  'http://10.0.2.2:3000',
-  'http://127.0.0.1:3000',
-];
+// Single fallback URL - using the same as the primary for simplicity
+// In a production app, you might want to configure multiple fallbacks
+const String _fallbackApiBaseUrl = 'https://sltnoc-api.azurewebsites.net';
 const Duration _connectionAttemptTimeout = Duration(seconds: 5);
 
 class ManualEscalation {
@@ -127,9 +120,8 @@ class ManualEscalationService {
       }
     } catch (_) {}
 
-    for (final baseUrl in _fallbackApiBaseUrls) {
-      final trimmed = baseUrl.trim();
-      if (trimmed.isEmpty || !seen.add(trimmed)) continue;
+    final trimmed = _fallbackApiBaseUrl.trim();
+    if (trimmed.isNotEmpty && seen.add(trimmed)) {
       list.add(Uri.parse('$trimmed$path'));
     }
     return list;
