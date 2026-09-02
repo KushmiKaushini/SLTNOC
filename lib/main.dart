@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ import 'home_page.dart';
 import 'service/notification_service.dart';
 import 'draggable_chat_button.dart';
 import 'shared_state.dart';
+import 'package:sltnoc/escalations/manual_escalation_queue.dart';
 
 const String loginPageRoute = '/login';
 
@@ -34,11 +37,62 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  Timer? _queueProcessorTimer;
+
   @override
   void initState() {
     super.initState();
     _requestLocationPermission();
+    WidgetsBinding.instance.addObserver(this);
+    _startQueueProcessorTimer();
+    // Process any queued escalations on app start
+    _processQueueOnResume();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _queueProcessorTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startQueueProcessorTimer() {
+    // Process queue every 30 seconds while app is active
+    _queueProcessorTimer ??= Timer.periodic(const Duration(seconds: 30), (timer) async {
+      try {
+        final int sent = await ManualEscalationQueue().processQueue();
+        if (kDebugMode && sent > 0) {
+          print('Processed $sent queued escalations');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error processing queue: $e');
+        }
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App resumed, process queue immediately
+      _processQueueOnResume();
+    }
+    // Optionally, you could pause/resume timer based on state, but we keep timer running.
+  }
+
+  Future<void> _processQueueOnResume() async {
+    try {
+      final int sent = await ManualEscalationQueue().processQueue();
+      if (kDebugMode && sent > 0) {
+        print('Processed $sent queued escalations on resume');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error processing queue on resume: $e');
+      }
+    }
   }
 
   @override

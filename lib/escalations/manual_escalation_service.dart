@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'manual_escalation_queue.dart';
 
 const String manualEscalationApiBaseUrl = String.fromEnvironment(
   'MANUAL_ESCALATION_API_BASE_URL',
@@ -169,19 +170,29 @@ class ManualEscalationService {
   }
 
   Future<void> create(ManualEscalation escalation) async {
-    final response = await _post(
-      '/api/manual-escalations',
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(escalation.toJson()),
-    );
+    try {
+      final response = await _post(
+        '/api/manual-escalations',
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(escalation.toJson()),
+      );
 
-    if (response.statusCode != 201) {
-      String message = 'Failed to create manual escalation';
-      try {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-        message = (decoded['error'] ?? message).toString();
-      } catch (_) {}
-      throw Exception(message);
+      if (response.statusCode != 201) {
+        String message = 'Failed to create manual escalation';
+        try {
+          final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+          message = (decoded['error'] ?? message).toString();
+        } catch (_) {}
+        throw Exception(message);
+      }
+    } on ManualEscalationConnectionException catch (e) {
+      // If we cannot connect, queue the escalation for later retry
+      await ManualEscalationQueue().addToQueue(escalation);
+      if (kDebugMode) {
+        print('Escalation queued due to connection error: $e');
+      }
+      // Optionally, you could show a notification to the user here
+      // For now, we just complete normally so the UI doesn't show an error
     }
   }
 
