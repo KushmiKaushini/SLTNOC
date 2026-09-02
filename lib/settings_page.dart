@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 import 'login_page.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/services/credential_store.dart';
@@ -29,18 +29,17 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _useLocalServer = prefs.getBool('useLocalServer') ?? true;
-      _urlController.text =
-          prefs.getString('serverUrl') ?? 'http://192.168.1.8:3000';
-    });
+    final storage = SecureStorageService();
+    final useLocalServerStr = await storage.read('useLocalServer');
+    _useLocalServer = useLocalServerStr == 'true';
+    _urlController.text =
+        await storage.read('serverUrl') ?? 'http://192.168.1.8:3000';
   }
 
   Future<void> _saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('useLocalServer', _useLocalServer);
-    await prefs.setString('serverUrl', _urlController.text.trim());
+    final storage = SecureStorageService();
+    await storage.write('useLocalServer', _useLocalServer.toString());
+    await storage.write('serverUrl', _urlController.text.trim());
 
     Fluttertoast.showToast(
       msg: "Settings saved successfully!",
@@ -188,11 +187,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   width: MediaQuery.of(context).size.width,
                   child: GestureDetector(
                     onTap: () async {
-                      SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
-                      await prefs.remove('username');
-                      await prefs.remove('password');
-                      await prefs.remove('displayName');
+                      final storage = SecureStorageService();
+                      await storage.delete('username');
+                      await storage.delete('password');
+                      await storage.delete('displayName');
 
                       Fluttertoast.showToast(
                         msg: "Logged out successfully!",

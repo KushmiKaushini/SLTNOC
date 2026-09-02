@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'dart:ui';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/foundation.dart';
@@ -165,7 +165,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     'Recent escalations overview',
   ];
 
-  // ── Getters ─────────────────────────────────────────────────────────────────
+  // ── Getters ───────────────────────────────────────────────────────────────
 
   ChatSession? get _activeSession {
     try {
@@ -177,7 +177,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
 
   List<ChatMessage> get _messages => _activeSession?.messages ?? [];
 
-  // ── Lifecycle ────────────────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -213,29 +213,29 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
   }
 
   // Proactive Alerts State
-    Map<String, dynamic>? _criticalAlert;
-    bool _dismissAlertBanner = false;
-    DateTime? _criticalAlertLastFetched;
-    static const Duration _criticalAlertCacheTTL = Duration(seconds: 45);
+  Map<String, dynamic>? _criticalAlert;
+  bool _dismissAlertBanner = false;
+  DateTime? _criticalAlertLastFetched;
+  static const Duration _criticalAlertCacheTTL = Duration(seconds: 45);
 
-  // ── Persistence ──────────────────────────────────────────────────────────────
+  // ── Persistence ────────────────────────────────────────────────────────────
 
   Future<void> _loadData() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? savedUrl = prefs.getString('serverUrl');
+    final storage = SecureStorageService();
+    String? savedUrl = await storage.read('serverUrl');
     if (savedUrl != null && savedUrl.trim().isNotEmpty) {
       final Uri uri = Uri.parse(savedUrl.trim());
       final String cleanUrl = uri.replace(userInfo: null).toString();
       if (cleanUrl != savedUrl.trim()) {
-        await prefs.setString('serverUrl', cleanUrl);
+        await storage.write('serverUrl', cleanUrl);
       }
       _serverUrl = cleanUrl;
     } else {
       _serverUrl = 'http://192.168.1.8:3000';
     }
 
-    final sessionsJson = prefs.getString('chat_sessions');
-    final activeId = prefs.getString('active_session_id');
+    final sessionsJson = await storage.read('chat_sessions');
+    final activeId = await storage.read('active_session_id');
 
     if (sessionsJson != null) {
       final decoded = jsonDecode(sessionsJson) as List;
@@ -257,6 +257,13 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     _fetchCriticalAlerts();
   }
 
+  Future<void> _saveSessions() async {
+    final storage = SecureStorageService();
+    await storage.write(
+        'chat_sessions', jsonEncode(_sessions.map((s) => s.toJson()).toList()));
+    await storage.write('active_session_id', _activeSessionId);
+  }
+
   Future<void> _fetchCriticalAlerts() async {
     // Check cache: if we have a recent critical alert, use it and return.
     final now = DateTime.now();
@@ -272,8 +279,8 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
 
     // 1. First try saved server URL
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedUrl = prefs.getString('serverUrl');
+      final storage = SecureStorageService();
+      final savedUrl = await storage.read('serverUrl');
       if (savedUrl != null && savedUrl.trim().isNotEmpty) {
         final trimmed = savedUrl.trim();
         if (seen.add(trimmed)) {
@@ -313,14 +320,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _saveSessions() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        'chat_sessions', jsonEncode(_sessions.map((s) => s.toJson()).toList()));
-    await prefs.setString('active_session_id', _activeSessionId);
-  }
-
-  // ── Sessions management ──────────────────────────────────────────────────────
+  // ── Sessions management ────────────────────────────────────────────────────
 
   void _createNewSession() {
     final session = ChatSession(name: 'Chat ${_sessions.length + 1}');
@@ -402,7 +402,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     );
   }
 
-  // ── Speech ───────────────────────────────────────────────────────────────────
+  // ── Speech ─────────────────────────────────────────────────────────────────
 
   void _initSpeech() async {
     _isSpeechAvailable = await _speechToText.initialize();
@@ -439,7 +439,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     await _flutterTts.stop();
 
     // Check if message text contains Sinhala characters
-    final RegExp sinhalaRegex = RegExp(r'[\u0d80-\u0dff]');
+    final RegExp sinhalaRegex = RegExp(r'[඀-෿]');
     if (sinhalaRegex.hasMatch(message.text)) {
       await _flutterTts.setLanguage("si-LK");
     } else {
@@ -465,7 +465,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     await _flutterTts.speak(message.text);
   }
 
-  // ── Messaging ────────────────────────────────────────────────────────────────
+  // ── Messaging ─────────────────────────────────────────────────────────────
 
   void _onTextChanged() => setState(() {});
 
@@ -516,8 +516,8 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
 
     // 1. First try saved server URL
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedUrl = prefs.getString('serverUrl');
+      final storage = SecureStorageService();
+      final savedUrl = await storage.read('serverUrl');
       if (savedUrl != null && savedUrl.trim().isNotEmpty) {
         final trimmed = savedUrl.trim();
         if (seen.add(trimmed)) {
@@ -667,7 +667,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     _saveSessions();
   }
 
-  // ── Quick Replies ─────────────────────────────────────────────────────────────
+  // ── Quick Replies ─────────────────────────────────────────────────────────
 
   void _generateQuickReplies(String aiText) {
     final lower = aiText.toLowerCase();
@@ -700,7 +700,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     setState(() => _quickReplies = suggestions.take(4).toList());
   }
 
-  // ── Export ────────────────────────────────────────────────────────────────────
+  // ── Export ────────────────────────────────────────────────────────────────
 
   Future<void> _exportChat() async {
     final session = _activeSession;
@@ -710,7 +710,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     buffer.writeln('═══════════════════════════════════');
     buffer.writeln('  NOC AI Assistant — ${session.name}');
     buffer.writeln('  Exported: ${DateTime.now().toString().substring(0, 16)}');
-    buffer.writeln('═══════════════════════════════════\n');
+    buffer.writeln('══════════════════════════════════\n');
 
     for (final msg in session.messages) {
       final sender = msg.isUser ? 'You' : 'AI Assistant';
@@ -741,7 +741,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     }
   }
 
-  // ── Scroll ────────────────────────────────────────────────────────────────────
+  // ── Scroll ────────────────────────────────────────────────────────────────
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -755,7 +755,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
     });
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   String _formatTimestamp(DateTime dt) {
     final h = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
@@ -842,8 +842,8 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
                   final String cleanUrl = uri.replace(userInfo: null).toString();
                   final bool hadCredentials = uri.userInfo.isNotEmpty;
 
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('serverUrl', cleanUrl);
+                  final storage = SecureStorageService();
+                  await storage.write('serverUrl', cleanUrl);
                   setState(() => _serverUrl = cleanUrl);
                   Navigator.pop(ctx);
                   if (mounted) {
@@ -1997,8 +1997,7 @@ class _AIChatPageState extends State<AIChatPage> with TickerProviderStateMixin {
       context: context,
       backgroundColor: _kSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) {
         return SafeArea(
           child: Padding(

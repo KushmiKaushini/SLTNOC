@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 import 'login_page.dart';
 import 'home_page.dart';
 import 'service/notification_service.dart';
@@ -95,6 +95,34 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<bool> _checkLoginStatus() async {
+    final storage = SecureStorageService();
+    String? username = await storage.read('username');
+    String? password = await storage.read('password');
+    return username != null && password != null;
+  }
+
+  // Function to get the display name from shared preferences
+  Future<String?> _getDisplayName() async {
+    final storage = SecureStorageService();
+    return await storage.read('displayName');
+  }
+
+  static Future<void> _requestLocationPermission() async {
+    if (kIsWeb ||
+        (defaultTargetPlatform != TargetPlatform.android &&
+            defaultTargetPlatform != TargetPlatform.iOS)) {
+      return;
+    }
+
+    // Request location permission
+    final PermissionStatus status =
+        await Permission.locationWhenInUse.request();
+    if (status != PermissionStatus.granted) {
+      // Handle denied or restricted permissions
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Set the status bar color to match your app's theme
@@ -172,35 +200,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       },
     );
   }
-
-  Future<bool> _checkLoginStatus() async {
-    return CredentialStore.hasCredentials();
-  }
-
-  // Function to get the display name from shared preferences
-  Future<String?> _getDisplayName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('displayName');
-  }
-
-  static Future<void> _requestLocationPermission() async {
-    if (kIsWeb ||
-        (defaultTargetPlatform != TargetPlatform.android &&
-            defaultTargetPlatform != TargetPlatform.iOS)) {
-      return;
-    }
-
-    // Request location permission
-    final PermissionStatus status =
-        await Permission.locationWhenInUse.request();
-    if (status != PermissionStatus.granted) {
-      // Handle denied or restricted permissions
-    }
-  }
 }
 
-/// Overlay widget that shows the draggable chat button only when logged in
-/// and NOT on the AI chat screen
 class _ChatButtonOverlay extends StatefulWidget {
   const _ChatButtonOverlay({Key? key}) : super(key: key);
 
@@ -243,9 +244,9 @@ class _ChatButtonOverlayState extends State<_ChatButtonOverlay>
   void didPopNext() => _checkLogin();
 
   Future<void> _checkLogin() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final username = prefs.getString('username');
-    final password = prefs.getString('password');
+    final storage = SecureStorageService();
+    final username = await storage.read('username');
+    final password = await storage.read('password');
     if (mounted) {
       setState(() {
         _isLoggedIn = username != null && password != null;
