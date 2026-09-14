@@ -15,16 +15,57 @@ class AppConfig {
       15.0; // Padding of the pages which have TABLES
   static const String bodyBackgroundImagePath = 'assets/appbarbg2.png';
 
-  // API Configuration
-  static String get apiBaseUrl {
-    // Try to get from environment variable (--dart-define)
-    String envUrl = String.fromEnvironment('API_BASE_URL');
-    if (envUrl.isNotEmpty) {
-      return envUrl;
-    }
-    // Fallback to default Azure URL
-    return 'https://sltnoc-api.azurewebsites.net';
-  }
+  // ---------------------------------------------------------------------------
+  // Environment & API Configuration (via --dart-define / --dart-define-from-file)
+  // ---------------------------------------------------------------------------
+
+  /// Active environment name: 'development', 'staging', 'production'.
+  static const String environment =
+      String.fromEnvironment('ENVIRONMENT', defaultValue: 'production');
+
+  /// Whether the app is running in production mode.
+  static bool get isProduction => environment.toLowerCase() == 'production';
+
+  /// Whether the app is running in development mode.
+  static bool get isDevelopment => environment.toLowerCase() == 'development';
+
+  /// Development bypass toggle - default false. Can be enabled via:
+  /// `--dart-define=DEV_MODE=true`
+  static const bool isDevMode =
+      bool.fromEnvironment('DEV_MODE', defaultValue: false);
+
+  /// Dev login username override via `--dart-define=DEV_USERNAME=...`
+  static const String devUsername =
+      String.fromEnvironment('DEV_USERNAME', defaultValue: 'testuser');
+
+  /// Dev login password override via `--dart-define=DEV_PASSWORD=...`
+  static const String devPassword =
+      String.fromEnvironment('DEV_PASSWORD', defaultValue: 'dev-password');
+
+  /// Dev login display name override via `--dart-define=DEV_DISPLAY_NAME=...`
+  static const String devDisplayName =
+      String.fromEnvironment('DEV_DISPLAY_NAME', defaultValue: 'Test User');
+
+  /// Node.js Backend REST API base URL. Can be set via:
+  /// `--dart-define=API_BASE_URL=http://192.168.1.10:3000`
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://sltnoc-api.azurewebsites.net',
+  );
+
+  /// SLT Internal SOAP Service endpoint. Can be overridden via:
+  /// `--dart-define=SOAP_ENDPOINT=https://fmt.slt.com.lk/fmt/WClogin.asmx`
+  static const String soapEndpoint = String.fromEnvironment(
+    'SOAP_ENDPOINT',
+    defaultValue: 'https://fmt.slt.com.lk/fmt/WClogin.asmx',
+  );
+
+  /// API Key for authenticating with the Node.js backend endpoints. Can be configured via:
+  /// `--dart-define=API_KEY=...`
+  static const String apiKey = String.fromEnvironment(
+    'API_KEY',
+    defaultValue: 'sltnoc-dev-secret-key-2026',
+  );
 
   // Card
   static const double homePageCardPadding = 15.0; // Padding

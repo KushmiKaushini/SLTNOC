@@ -1,7 +1,11 @@
 // Main file to call APIs when needed
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const { authMiddleware } = require('./routes/authMiddleware');
+const authRoutes = require('./routes/auth');
 const alarmsRoutes1 = require('./routes/alarms1');
 const alarmsRoutes2 = require('./routes/alarms2');
 const regionsRoutes1 = require('./routes/provinces');
@@ -96,9 +100,40 @@ async function getSqlCredentialsFromKeyVault() {
   }
 }
 
-// CORS middleware
-app.use(cors());
-app.use(express.json());
+// CORS configuration (restricted origins with mobile/local fallback)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim())
+  : ['https://sltnoc-api.azurewebsites.net', 'http://localhost:3000', 'http://localhost:8080'];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS not allowed from origin: ' + origin));
+    },
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  })
+);
+
+// Body parser with 1MB limit
+app.use(express.json({ limit: '1mb' }));
+
+// Rate limiter for AI endpoints (30 requests/minute)
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests, please try again later.' },
+});
+
+// Authentication routes (Public token generation & verification)
+app.use('/api/auth', authRoutes);
 
 // Initialize Ollama client
 const ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://localhost:11434' });
@@ -235,7 +270,7 @@ const OLLAMA_OPTIONS = {
 };
 
 // ── Non-streaming AI Chat endpoint (kept for fallback) ──────────────────────
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', authMiddleware, aiLimiter, async (req, res) => {
   try {
     const { message, conversationHistory } = req.body;
 
@@ -281,7 +316,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // ── Streaming AI Chat endpoint (SSE) ────────────────────────────────────────
-app.post('/api/chat-stream', async (req, res) => {
+app.post('/api/chat-stream', authMiddleware, aiLimiter, async (req, res) => {
   try {
     const { message, conversationHistory } = req.body;
 
@@ -353,7 +388,7 @@ app.post('/api/chat-stream', async (req, res) => {
 });
 
 // ── Critical Alerts check endpoint (for proactive banner in mobile app) ────
-app.get('/api/critical-alerts', async (req, res) => {
+app.get('/api/critical-alerts', authMiddleware, async (req, res) => {
   try {
     const now = Date.now();
     // Return cached data if still valid
@@ -403,13 +438,13 @@ async function warmupOllama() {
   }
 }
 
-// Use routes
-app.use('/api/alarms1', alarmsRoutes1);
-app.use('/api/alarms2', alarmsRoutes2);
-app.use('/api/provinces', regionsRoutes1);
-app.use('/api/alarm-details', alarmsDetails1);
-app.use('/api/node-details', nodeDetails);
-app.use('/api/manual-escalations', manualEscalations);
+// Protected API routes
+app.use('/api/alarms1', authMiddleware, alarmsRoutes1);
+app.use('/api/alarms2', authMiddleware, alarmsRoutes2);
+app.use('/api/provinces', authMiddleware, regionsRoutes1);
+app.use('/api/alarm-details', authMiddleware, alarmsDetails1);
+app.use('/api/node-details', authMiddleware, nodeDetails);
+app.use('/api/manual-escalations', authMiddleware, manualEscalations);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

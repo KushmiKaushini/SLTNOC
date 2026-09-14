@@ -151,7 +151,7 @@ import 'current_alarms_expanded1.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 
 class CurrentAlarmsPage extends StatefulWidget {
   final String province;
@@ -177,14 +177,15 @@ class _CurrentAlarmsPageState extends State<CurrentAlarmsPage> {
 
   Future<void> fetchData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final useLocalServer = prefs.getBool('useLocalServer') ?? true;
+      final storage = SecureStorageService();
+      final useLocalServer = await storage.getUseLocalServer();
       final serverUrl =
-          prefs.getString('serverUrl') ?? 'http://192.168.1.14:3000';
+          await storage.getServerUrl() ?? 'http://192.168.1.14:3000';
 
       if (useLocalServer) {
         final response = await http.get(
           Uri.parse('$serverUrl/api/alarms1/data/${widget.province}'),
+          headers: {'X-API-Key': AppConfig.apiKey},
         );
         if (response.statusCode == 200) {
           final List<dynamic> jsonData = json.decode(response.body);

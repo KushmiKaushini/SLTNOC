@@ -29,16 +29,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadSettings() async {
     final storage = SecureStorageService();
-    final useLocalServerStr = await storage.read('useLocalServer');
-    _useLocalServer = useLocalServerStr == 'true';
+    _useLocalServer = await storage.getUseLocalServer();
     _urlController.text =
-        await storage.read('serverUrl') ?? AppConfig.apiBaseUrl;
+        await storage.getServerUrl() ?? AppConfig.apiBaseUrl;
   }
 
   Future<void> _saveSettings() async {
     final storage = SecureStorageService();
-    await storage.write('useLocalServer', _useLocalServer.toString());
-    await storage.write('serverUrl', _urlController.text.trim());
+    await storage.setUseLocalServer(_useLocalServer);
+    await storage.setServerUrl(_urlController.text.trim());
 
     Fluttertoast.showToast(
       msg: "Settings saved successfully!",
@@ -187,9 +186,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: GestureDetector(
                     onTap: () async {
                       final storage = SecureStorageService();
-                      await storage.delete('username');
-                      await storage.delete('password');
-                      await storage.delete('displayName');
+                      await storage.clearCredentials();
 
                       Fluttertoast.showToast(
                         msg: "Logged out successfully!",

@@ -17,6 +17,9 @@ const String loginPageRoute = '/login';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Migrate any legacy plaintext credentials from SharedPreferences to SecureStorage
+  await SecureStorageService().migrateFromSharedPreferences();
+
   await NotificationService.initialize();
 
   runApp(const MyApp());
@@ -97,15 +100,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Future<bool> _checkLoginStatus() async {
     final storage = SecureStorageService();
-    String? username = await storage.read('username');
-    String? password = await storage.read('password');
-    return username != null && password != null;
+    return await storage.hasValidCredentials();
   }
 
-  // Function to get the display name from shared preferences
+  // Function to get the display name from secure storage
   Future<String?> _getDisplayName() async {
     final storage = SecureStorageService();
-    return await storage.read('displayName');
+    return await storage.getDisplayName();
   }
 
   static Future<void> _requestLocationPermission() async {
@@ -245,11 +246,10 @@ class _ChatButtonOverlayState extends State<_ChatButtonOverlay>
 
   Future<void> _checkLogin() async {
     final storage = SecureStorageService();
-    final username = await storage.read('username');
-    final password = await storage.read('password');
+    final isValid = await storage.hasValidCredentials();
     if (mounted) {
       setState(() {
-        _isLoggedIn = username != null && password != null;
+        _isLoggedIn = isValid;
       });
     }
   }

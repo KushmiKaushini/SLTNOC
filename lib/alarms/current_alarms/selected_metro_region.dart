@@ -184,7 +184,7 @@ import 'package:sltnoc/alarms/current_alarms/current_alarms.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/loading_indicator.dart';
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sltnoc/secure_storage_service.dart';
 import 'package:sltnoc/widgets/my_card.dart';
 
 class SelectedMetroRegionPage extends StatefulWidget {
@@ -210,14 +210,15 @@ class _SelectedMetroRegionPageState extends State<SelectedMetroRegionPage> {
 
   Future<void> fetchProvinces() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final useLocalServer = prefs.getBool('useLocalServer') ?? true;
+      final storage = SecureStorageService();
+      final useLocalServer = await storage.getUseLocalServer();
       final serverUrl =
-          prefs.getString('serverUrl') ?? AppConfig.apiBaseUrl;
+          await storage.getServerUrl() ?? AppConfig.apiBaseUrl;
 
       if (useLocalServer) {
         final response = await http.get(
           Uri.parse('$serverUrl/api/provinces/data/${widget.title}'),
+          headers: {'X-API-Key': AppConfig.apiKey},
         );
         if (response.statusCode == 200) {
           final List<dynamic> jsonData = json.decode(response.body);

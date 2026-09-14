@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SLTNOC (Local Dev with .env)",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define-from-file=.env"
+      ]
+    },
+    {
+      "name": "SLTNOC (Production)",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define=ENVIRONMENT=production",
+        "--dart-define=DEV_MODE=false"
+      ]
+    }
+  ]
+}

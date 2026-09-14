@@ -186,13 +186,99 @@ try {
 
 ---
 
+## Node.js REST API Authentication & Security
+
+All sensitive REST endpoints served by the Node.js backend require authentication.
+
+### Authentication Methods
+Clients may authenticate using either of two methods:
+
+1. **API Key (Default for Mobile Client)**:
+   - Header: `X-API-Key: <api_key>`
+   - Or Header: `Authorization: ApiKey <api_key>`
+   - Configured in Flutter via `AppConfig.apiKey` (`--dart-define=API_KEY=...`)
+   - Default development key: `sltnoc-dev-secret-key-2026`
+
+2. **JSON Web Token (JWT)**:
+   - Header: `Authorization: Bearer <jwt_token>`
+   - Standard HS256 JWT signed with `JWT_SECRET`
+   - Configurable expiration (default `7d`)
+
+### Public vs Protected Endpoints
+
+| Endpoint | Method | Auth Required | Description |
+|----------|--------|---------------|-------------|
+| `/api/ai-health` | GET | ❌ No | Health check probe for Ollama & model status |
+| `/api/auth/token` | POST | ❌ No | Generates a JWT given credentials or API key |
+| `/api/auth/verify` | GET | ❌ No | Validates Bearer token in Authorization header |
+| `/api/chat` | POST | ✅ Yes | AI Chat non-streaming (Rate-limited: 30 req/min) |
+| `/api/chat-stream` | POST | ✅ Yes | AI Chat SSE streaming (Rate-limited: 30 req/min) |
+| `/api/critical-alerts` | GET | ✅ Yes | Proactive critical alerts summary |
+| `/api/manual-escalations` | GET, POST | ✅ Yes | Manual escalation CRUD |
+| `/api/manual-escalations/:id` | DELETE | ✅ Yes | Delete manual escalation |
+| `/api/alarms1/data/:province` | GET | ✅ Yes | Province alarm summary |
+| `/api/alarms2/data/:name/:province` | GET | ✅ Yes | Engineer group alarm details |
+| `/api/provinces/data/:region` | GET | ✅ Yes | Province list for region |
+| `/api/alarm-details/data/*` | GET | ✅ Yes | Granular alarm details |
+| `/api/node-details/data/*` | GET | ✅ Yes | Network element telemetry |
+
+---
+
+### Authentication Endpoints
+
+#### 1. **Generate Token** (`POST /api/auth/token`)
+
+**Request:**
+```http
+POST /api/auth/token
+Content-Type: application/json
+
+{
+  "apiKey": "sltnoc-dev-secret-key-2026",
+  "username": "E12345"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": "7d"
+}
+```
+
+#### 2. **Verify Token** (`GET /api/auth/verify`)
+
+**Request:**
+```http
+GET /api/auth/verify
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "valid": true,
+  "user": {
+    "sub": "E12345",
+    "role": "engineer",
+    "iat": 1789299128,
+    "exp": 1789903928
+  }
+}
+```
+
+---
+
 ## Ollama LLM API (AI Chat)
 
 ### Base URL
-- **Configurable**: Stored in `SharedPreferences` as `serverUrl`
-- **Default**: `http://192.168.1.8:3000`
-- **Fallback Chain**: 8 URLs tried sequentially (same pattern as Manual Escalation API)
-- **Implementation**: Defined in `lib/ai_chat_page.dart` as `_kChatFallbackUrls` with 5s timeout per attempt
+- **Configurable**: Stored in `SecureStorageService` as `serverUrl`
+- **Default**: `AppConfig.apiBaseUrl` (`https://sltnoc-api.azurewebsites.net`)
+- **Fallback Chain**: Tried sequentially with 5s timeout per attempt
+- **Implementation**: Defined in `lib/ai_chat/services/chat_api_service.dart`
 
 ### Endpoints
 
@@ -202,6 +288,7 @@ try {
 ```http
 POST /api/chat-stream
 Content-Type: application/json
+X-API-Key: sltnoc-dev-secret-key-2026
 
 {
   "message": "Show active alarms in Western province",

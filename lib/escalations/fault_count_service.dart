@@ -1,10 +1,11 @@
+import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:sltnoc/escalations/manual_escalation_service.dart';
 import 'package:sltnoc/service/notification_service.dart';
 
 class FaultCountService {
-  static const String _soapEndpoint = 'https://fmt.slt.com.lk/fmt/WClogin.asmx';
+  static String get _soapEndpoint => AppConfig.soapEndpoint;
   static final _manualEscalationService = const ManualEscalationService();
 
   static int _lastFaultCount = 0;
