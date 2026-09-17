@@ -2,6 +2,7 @@
 // Delegates to tedious/mssql, but automatically falls back to in-memory mock database
 // if the connection fails or if SQL Server is not running.
 
+require('dotenv').config();
 const mssql = require('mssql');
 const { mockFaults, mockEscalationsAuto } = require('./mockDbData');
 const { DefaultAzureCredential } = require("@azure/identity");

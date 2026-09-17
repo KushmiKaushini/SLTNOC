@@ -705,11 +705,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           await Permission.locationWhenInUse.request();
       if (status != PermissionStatus.granted) {
         // Handle denied or restricted permissions
-        print("Location permission denied or restricted.");
+        if (kDebugMode) {
+          debugPrint("Location permission denied or restricted.");
+        }
       }
     } catch (e) {
       // Handle any unexpected errors
-      print("An error occurred while requesting location permission: $e");
+      if (kDebugMode) {
+        debugPrint("An error occurred while requesting location permission: $e");
+      }
     }
   }
 
@@ -1187,10 +1191,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         await process2();
       } else {
         await process1(nweng: '...ALL...');
-        print('${widget.displayName} not found in engNameList');
+        if (kDebugMode) {
+          debugPrint('${widget.displayName} not found in engNameList');
+        }
       }
     } catch (e) {
-      print('fetchDataAndProcess error (non-fatal): $e');
+      if (kDebugMode) {
+        debugPrint('fetchDataAndProcess error (non-fatal): $e');
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -1229,11 +1237,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           engNameList[name] = true;
         }
       } else {
-        print('Failed to fetch engNameList: ${fullEngListResponse.statusCode}');
+        if (kDebugMode) {
+          debugPrint(
+              'Failed to fetch engNameList: ${fullEngListResponse.statusCode}');
+        }
       }
-      print(engNameList);
+      if (kDebugMode) {
+        debugPrint(engNameList.toString());
+      }
     } catch (e) {
-      print('fetchEngNameList error (non-fatal): $e');
+      if (kDebugMode) {
+        debugPrint('fetchEngNameList error (non-fatal): $e');
+      }
     }
   }
 
@@ -1254,7 +1269,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         </soap:Body>
       </soap:Envelope>''',
     );
-    print('Faults 3 Response: ${faults3Response.body}');
+    if (kDebugMode) {
+      debugPrint('Faults 3 Response: ${faults3Response.body}');
+    }
 
     if (faults3Response.statusCode == 200) {
       final faults3Xml = xml.XmlDocument.parse(faults3Response.body);
@@ -1271,7 +1288,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         }
       }
 
-      print(timeFilteredMSANs);
+      if (kDebugMode) {
+        debugPrint(timeFilteredMSANs.toString());
+      }
 
       final finalMapWithGeo = <String>[];
       for (final msan in timeFilteredMSANs) {
@@ -1305,7 +1324,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           }
         }
       }
-      print(finalMapWithGeo);
+      if (kDebugMode) {
+        debugPrint(finalMapWithGeo.toString());
+      }
       updateMarkers(finalMapWithGeo);
     }
   }
@@ -1327,7 +1348,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         </soap:Body>
       </soap:Envelope>''',
     );
-    print('Faults 3 Response: ${faults3Response.body}');
+    if (kDebugMode) {
+      debugPrint('Faults 3 Response: ${faults3Response.body}');
+    }
 
     if (faults3Response.statusCode == 200) {
       final faults3Xml = xml.XmlDocument.parse(faults3Response.body);
@@ -1359,8 +1382,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final updatedMarkers = msansWithGeo
         .map((msanWithGeo) {
           final parts = msanWithGeo.split('::');
-          print('Parts length: ${parts.length}');
-          print('Parts: ${parts}');
+          if (kDebugMode) {
+            debugPrint('Parts length: ${parts.length}');
+            debugPrint('Parts: $parts');
+          }
           if (parts.length >= 7) {
             final lat = double.tryParse(parts[5]);
             final lng = double.tryParse(parts[6]);
@@ -1395,7 +1420,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         .where((marker) => marker != null)
         .map((marker) => marker!)
         .toSet();
-    print(updatedMarkers);
+    if (kDebugMode) {
+      debugPrint(updatedMarkers.toString());
+    }
     if (mounted) {
       setState(() {
         _markers = updatedMarkers;

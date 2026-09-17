@@ -2,18 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:sltnoc/secure_storage_service.dart';
 import 'manual_escalation_queue.dart';
 
-const String manualEscalationApiBaseUrl = String.fromEnvironment(
-  'MANUAL_ESCALATION_API_BASE_URL',
-  defaultValue: 'https://sltnoc-api.azurewebsites.net',
-);
+String get manualEscalationApiBaseUrl => AppConfig.apiBaseUrl;
 
-// Single fallback URL - using the same as the primary for simplicity
-// In a production app, you might want to configure multiple fallbacks
-const String _fallbackApiBaseUrl = 'https://sltnoc-api.azurewebsites.net';
+String get _fallbackApiBaseUrl => AppConfig.apiBaseUrl;
 const Duration _connectionAttemptTimeout = Duration(seconds: 5);
 
 class ManualEscalation {
@@ -181,7 +177,7 @@ class ManualEscalationService {
       // If we cannot connect, queue the escalation for later retry
       await ManualEscalationQueue().addToQueue(escalation);
       if (kDebugMode) {
-        print('Escalation queued due to connection error: $e');
+        debugPrint('Escalation queued due to connection error: $e');
       }
       // Optionally, you could show a notification to the user here
       // For now, we just complete normally so the UI doesn't show an error
@@ -224,7 +220,10 @@ class ManualEscalationService {
     final uris = await _uris(path);
     for (final uri in uris) {
       try {
-        return await http.get(uri).timeout(_connectionAttemptTimeout);
+        return await http.get(
+          uri,
+          headers: {'X-API-Key': AppConfig.apiKey},
+        ).timeout(_connectionAttemptTimeout);
       } catch (error) {
         lastError = error;
         if (kDebugMode) {
@@ -242,10 +241,14 @@ class ManualEscalationService {
   }) async {
     Object? lastError;
     final uris = await _uris(path);
+    final reqHeaders = <String, String>{
+      'X-API-Key': AppConfig.apiKey,
+      ...headers,
+    };
     for (final uri in uris) {
       try {
         return await http
-            .post(uri, headers: headers, body: body)
+            .post(uri, headers: reqHeaders, body: body)
             .timeout(_connectionAttemptTimeout);
       } catch (error) {
         lastError = error;
@@ -263,8 +266,10 @@ class ManualEscalationService {
     final uris = await _uris(path);
     for (final uri in uris) {
       try {
-        final response =
-            await http.delete(uri).timeout(_connectionAttemptTimeout);
+        final response = await http.delete(
+          uri,
+          headers: {'X-API-Key': AppConfig.apiKey},
+        ).timeout(_connectionAttemptTimeout);
         if (response.statusCode >= 200 && response.statusCode < 300) {
           return response;
         }
@@ -296,7 +301,6 @@ class ManualEscalationConnectionException implements Exception {
   @override
   String toString() {
     return 'Manual escalation server connect wenne naha. '
-        'Backend eka run karala phone ekai server ekai same Wi-Fi/network eke '
-        'innawada balanna. Current URL: $manualEscalationApiBaseUrl';
+        'Please check your network connection and try again.';
   }
 }

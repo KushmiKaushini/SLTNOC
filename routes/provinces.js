@@ -3,19 +3,22 @@
 const express = require('express');
 const router = express.Router();
 const sql = require('./db');
-const dbConfig = require('./dbConfig'); // Importing the DB config file
+const dbConfig = require('./dbConfig');
 
 router.get('/data/:region', async (req, res) => {
   try {
     // Connect to MS SQL Server
-    await sql.connect(dbConfig);
+    const pool = await sql.connect(dbConfig);
 
     // Extract the region parameter from the request
     const region = req.params.region;
 
-    // Execute SQL query with the provided region
-    const query = `SELECT DISTINCT(PROVINCE) FROM FAULTS WHERE REGION = '${region}'`;
-    const result = await sql.query(query);
+    const request = pool.request();
+    request.input('region', sql.VarChar, region);
+
+    // Execute parameterized SQL query with the provided region
+    const query = `SELECT DISTINCT(PROVINCE) FROM FAULTS WHERE REGION = @region`;
+    const result = await request.query(query);
 
     // Extract provinces from the result
     const provinces = result.recordset.map(record => record.PROVINCE);

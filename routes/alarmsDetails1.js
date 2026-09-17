@@ -3,19 +3,24 @@
 const express = require('express');
 const router = express.Router();
 const sql = require('./db');
-const dbConfig = require('./dbConfig'); // Importing the DB config file
+const dbConfig = require('./dbConfig');
 
 router.get('/data/:alarmType/:name/:province', async (req, res) => {
     try {
         // Connect to MS SQL Server
-        await sql.connect(dbConfig);
+        const pool = await sql.connect(dbConfig);
 
         // Extract parameters from the request
         const { alarmType, name, province } = req.params;
 
-        // Execute SQL query with the provided parameters
-        const query = `SELECT NODE, DATEDIFF(hour, FAULT_TIME, GETDATE()) AS DURATION FROM FAULTS WHERE ALARM_TYPE = '${alarmType}' AND NW_ENG = '${name}' AND PROVINCE = '${province}'`;
-        const result = await sql.query(query);
+        const request = pool.request();
+        request.input('alarmType', sql.VarChar, alarmType);
+        request.input('name', sql.VarChar, name);
+        request.input('province', sql.VarChar, province);
+
+        // Execute parameterized SQL query with the provided parameters
+        const query = `SELECT NODE, DATEDIFF(hour, FAULT_TIME, GETDATE()) AS DURATION FROM FAULTS WHERE ALARM_TYPE = @alarmType AND NW_ENG = @name AND PROVINCE = @province`;
+        const result = await request.query(query);
 
         // Send the result as formatted JSON
         const formattedJson = JSON.stringify(result.recordset, null, 2);

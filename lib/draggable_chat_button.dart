@@ -116,7 +116,7 @@ class _DraggableChatButtonState extends State<DraggableChatButton>
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: Image.asset(
-                    'assets/chatbot-icon.png',
+                    'assets/chatbot-icon.webp',
                     fit: BoxFit.contain,
                   ),
                 ),
