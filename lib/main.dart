@@ -66,11 +66,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       try {
         final int sent = await ManualEscalationQueue().processQueue();
         if (kDebugMode && sent > 0) {
-          print('Processed $sent queued escalations');
+          debugPrint('Processed $sent queued escalations');
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Error processing queue: $e');
+          debugPrint('Error processing queue: $e');
         }
       }
     });
@@ -89,11 +89,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     try {
       final int sent = await ManualEscalationQueue().processQueue();
       if (kDebugMode && sent > 0) {
-        print('Processed $sent queued escalations on resume');
+        debugPrint('Processed $sent queued escalations on resume');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error processing queue on resume: $e');
+        debugPrint('Error processing queue on resume: $e');
       }
     }
   }

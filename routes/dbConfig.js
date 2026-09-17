@@ -2,7 +2,7 @@
 
 module.exports = {
     user: process.env.DB_USER || 'sa', // MS SQL Server username
-    password: process.env.DB_PASSWORD || 'Madhuka@SLT1397', // MS SQL Server password
+    password: process.env.DB_PASSWORD || '', // MS SQL Server password from environment
     server: process.env.DB_SERVER || 'localhost\\SQLEXPRESS', // MS SQL Server address
     database: process.env.DB_DATABASE || 'TMS', // MS SQL Server Database
     options: {

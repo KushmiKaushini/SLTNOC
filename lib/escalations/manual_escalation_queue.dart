@@ -57,7 +57,7 @@ class ManualEscalationQueue {
         remaining.add(escalation);
         // Optionally log the error
         if (kDebugMode) {
-          print('Failed to send queued escalation: $e');
+          debugPrint('Failed to send queued escalation: $e');
         }
       }
     }

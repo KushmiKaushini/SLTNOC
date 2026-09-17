@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/http.dart' as http;
@@ -46,7 +47,9 @@ class _LoginPageState extends State<LoginPage> {
 
   // Dev mode login - bypasses SOAP validation
   Future<void> _devLogin() async {
-    print('🔓 DEV LOGIN: Initiating dev login bypass...');
+    if (kDebugMode) {
+      debugPrint('🔓 DEV LOGIN: Initiating dev login bypass...');
+    }
     setState(() {
       _loading = true;
       _showErrorMessage = false;
@@ -59,13 +62,15 @@ class _LoginPageState extends State<LoginPage> {
       displayName: _DEV_DISPLAY_NAME,
     );
 
-    print('✅ DEV LOGIN: Credentials stored');
-    print('   Username: $_DEV_USERNAME');
-    print('   Display Name: $_DEV_DISPLAY_NAME');
+    if (kDebugMode) {
+      debugPrint('✅ DEV LOGIN: Credentials stored successfully');
+    }
 
     if (!mounted) return;
 
-    print('🚀 DEV LOGIN: Navigating to home page...');
+    if (kDebugMode) {
+      debugPrint('🚀 DEV LOGIN: Navigating to home page...');
+    }
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/',
@@ -103,7 +108,9 @@ class _LoginPageState extends State<LoginPage> {
     // Parse the login response
     String loginResponseBody = loginResponse.body;
     if (loginResponseBody.contains('TRUE')) {
-      print('Login successful: Default User');
+      if (kDebugMode) {
+        debugPrint('Login successful: Default User');
+      }
       // Extract user name using the second SOAP request
       const String displayNameUrl = 'https://fmt.slt.com.lk/fmt/WClogin.asmx';
       String displayNameRequestBody = '''<?xml version="1.0" encoding="utf-8"?>
@@ -156,13 +163,17 @@ class _LoginPageState extends State<LoginPage> {
       (route) => false, // Removes all routes in the stack
     );
   } else if (loginResponseBody.contains('FALSE')) {
-    print('Invalid credentials');
+    if (kDebugMode) {
+      debugPrint('Invalid credentials');
+    }
     setState(() {
       _showErrorMessage = true;
     });
     // Handle invalid credentials here
   } else {
-    print('Unexpected response: $loginResponseBody');
+    if (kDebugMode) {
+      debugPrint('Unexpected response: $loginResponseBody');
+    }
     // Handle unexpected response here
   }
 

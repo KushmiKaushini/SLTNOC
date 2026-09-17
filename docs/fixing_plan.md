@@ -12,9 +12,9 @@
 | Phase | Category | Status |
 |---|---|---|
 | Phase 1 | Credential Storage Migration | ✅ **COMPLETED** |
-| Phase 2 | Backend & API Security | 🟡 In Progress |
-| Phase 3 | Code Quality & Refactoring | ⬜ Pending |
-| Phase 4 | Asset Optimization & Performance | ⬜ Pending |
+| Phase 2 | Backend & API Security | ✅ **COMPLETED** |
+| Phase 3 | Code Quality & Refactoring | 🟡 In Progress |
+| Phase 4 | Asset Optimization & Performance | 🟡 In Progress |
 | Phase 5 | Unit & Integration Testing | ⬜ Pending |
 | Phase 6 | Documentation & CI/CD | ⬜ Pending |
 
@@ -36,14 +36,16 @@
 
 ---
 
-## 🔴 Phase 2: Backend Security (IN PROGRESS 🟡)
+## 🔴 Phase 2: Backend Security (COMPLETED ✅)
 
 - [x] **SEC-02-A** Guard `_DEV_MODE` in `login_page.dart` with `bool.fromEnvironment('DEV_MODE', defaultValue: false)`
 - [x] **SEC-03-A** Restrict CORS in `server.js` to authorized origins (mobile client & local LAN subnet)
 - [x] **SEC-04-A** Implement JWT & API Key authentication middleware for sensitive Node.js endpoints (`/api/manual-escalations`, `/api/chat`, `/api/chat-stream`, `/api/critical-alerts`, `/api/alarms1`, `/api/alarms2`, `/api/provinces`, `/api/alarm-details`, `/api/node-details`)
 - [x] **SEC-04-B** Add `/api/auth/token` and `/api/auth/verify` endpoints on Node backend to issue secure tokens
 - [x] **SEC-05-A** Sanitize connection error messages in `manual_escalation_service.dart` to hide raw internal URLs
-- [ ] **SEC-06-A** Replace bare `print()` statements with `if (kDebugMode) debugPrint(...)`
+- [x] **SEC-06-A** Replace bare `print()` statements with `if (kDebugMode) debugPrint(...)` and prevent credential exposure in logs
+- [x] **SEC-07-A** Parameterize SQL queries across `routes/alarms1.js`, `routes/provinces.js`, and `routes/alarmsDetails1.js` using `request.input()` to eliminate SQL Injection vulnerabilities
+- [x] **SEC-08-A** Remove hardcoded database passwords and legacy configuration from `routes/dbConfig.js` and `routes/alarms1.js`
 
 ---
 

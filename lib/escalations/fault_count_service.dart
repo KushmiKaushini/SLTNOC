@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
@@ -41,7 +42,9 @@ class FaultCountService {
 
       return totalFaults;
     } catch (e) {
-      print('Error fetching fault count: $e');
+      if (kDebugMode) {
+        debugPrint('Error fetching fault count: $e');
+      }
       return 0;
     }
   }
@@ -84,7 +87,9 @@ class FaultCountService {
       }
       return 0;
     } catch (e) {
-      print('Error fetching automatic fault count: $e');
+      if (kDebugMode) {
+        debugPrint('Error fetching automatic fault count: $e');
+      }
       return 0;
     }
   }
@@ -97,7 +102,9 @@ class FaultCountService {
           .where((item) => item.escalationType == 'FAULTS')
           .length;
     } catch (e) {
-      print('Error fetching manual fault count: $e');
+      if (kDebugMode) {
+        debugPrint('Error fetching manual fault count: $e');
+      }
       return 0;
     }
   }

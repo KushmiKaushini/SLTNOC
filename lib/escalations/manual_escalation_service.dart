@@ -177,7 +177,7 @@ class ManualEscalationService {
       // If we cannot connect, queue the escalation for later retry
       await ManualEscalationQueue().addToQueue(escalation);
       if (kDebugMode) {
-        print('Escalation queued due to connection error: $e');
+        debugPrint('Escalation queued due to connection error: $e');
       }
       // Optionally, you could show a notification to the user here
       // For now, we just complete normally so the UI doesn't show an error

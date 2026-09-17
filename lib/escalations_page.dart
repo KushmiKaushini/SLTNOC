@@ -1,6 +1,7 @@
 // escalations_page.dart
 
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sltnoc/app_config.dart';
 import 'package:sltnoc/settings_button.dart';
@@ -58,7 +59,9 @@ class _EscalationsPageState extends State<EscalationsPage> {
         });
       }
     } catch (e) {
-      print('Error updating fault count: $e');
+      if (kDebugMode) {
+        debugPrint('Error updating fault count: $e');
+      }
     }
   }
 
