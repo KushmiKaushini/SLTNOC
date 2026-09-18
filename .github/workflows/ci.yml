@@ -1,0 +1,34 @@
+name: SLTNOC CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, kaushini-ekanayake ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  flutter-test:
+    name: Flutter Analyze & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Verify Formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze Project Code
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run Test Suite
+        run: flutter test

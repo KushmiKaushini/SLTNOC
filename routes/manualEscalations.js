@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs/promises');
 const path = require('path');
+const db = require('./db');
 
 const router = express.Router();
 const dataDir = path.join(__dirname, '..', 'data');
@@ -37,22 +38,55 @@ function itemId(item) {
 
 router.get('/', async (req, res) => {
   try {
+    const request = new db.Request();
+    const result = await request.query(`
+      SELECT id, escalationType, node, platform, severity, tag, description, startAt, reportingBy, responsibleOfficer, status, createdAt, updatedAt
+      FROM MANUAL_ESCALATIONS
+      WHERE status != 'CLOSED'
+      ORDER BY createdAt DESC
+    `);
+    if (result && result.recordset && result.recordset.length > 0) {
+      return res.json(result.recordset);
+    }
     const items = await readItems();
     res.json(items.filter((item) => item.status !== 'CLOSED'));
   } catch (error) {
-    console.error('Manual escalations read error:', error);
-    res.status(500).json({ error: 'Unable to read manual escalations' });
+    console.warn('DB query failed for manual escalations, falling back to JSON store:', error.message);
+    try {
+      const items = await readItems();
+      res.json(items.filter((item) => item.status !== 'CLOSED'));
+    } catch (readErr) {
+      console.error('Manual escalations read error:', readErr);
+      res.status(500).json({ error: 'Unable to read manual escalations' });
+    }
   }
 });
 
 router.get('/summary', async (req, res) => {
   try {
+    const request = new db.Request();
+    const result = await request.query(`
+      SELECT COUNT(*) as activeCount
+      FROM MANUAL_ESCALATIONS
+      WHERE status != 'CLOSED'
+    `);
+    if (result && result.recordset && result.recordset.length > 0 && result.recordset[0].activeCount > 0) {
+      const count = result.recordset[0].activeCount;
+      return res.json({ activeCount: count, hasActive: count > 0 });
+    }
     const items = await readItems();
     const activeCount = items.filter((item) => item.status !== 'CLOSED').length;
     res.json({ activeCount, hasActive: activeCount > 0 });
   } catch (error) {
-    console.error('Manual escalations summary error:', error);
-    res.status(500).json({ error: 'Unable to read manual escalations summary' });
+    console.warn('DB query failed for manual escalations summary, falling back to JSON store:', error.message);
+    try {
+      const items = await readItems();
+      const activeCount = items.filter((item) => item.status !== 'CLOSED').length;
+      res.json({ activeCount, hasActive: activeCount > 0 });
+    } catch (readErr) {
+      console.error('Manual escalations summary error:', readErr);
+      res.status(500).json({ error: 'Unable to read manual escalations summary' });
+    }
   }
 });
 
@@ -78,25 +112,49 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Start at must be a valid date/time' });
   }
 
+  const now = new Date().toISOString();
+  const item = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    escalationType,
+    node,
+    platform,
+    severity,
+    tag,
+    description,
+    startAt: parsedStartAt.toISOString(),
+    reportingBy,
+    responsibleOfficer,
+    status: 'OPEN',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  try {
+    const request = new db.Request();
+    request.input('id', db.VarChar, item.id);
+    request.input('escalationType', db.VarChar, item.escalationType);
+    request.input('node', db.VarChar, item.node);
+    request.input('platform', db.VarChar, item.platform);
+    request.input('severity', db.VarChar, item.severity);
+    request.input('tag', db.VarChar, item.tag);
+    request.input('description', db.NVarChar, item.description);
+    request.input('startAt', db.DateTime, new Date(item.startAt));
+    request.input('reportingBy', db.VarChar, item.reportingBy);
+    request.input('responsibleOfficer', db.VarChar, item.responsibleOfficer);
+    request.input('status', db.VarChar, item.status);
+    request.input('createdAt', db.DateTime, new Date(item.createdAt));
+    request.input('updatedAt', db.DateTime, new Date(item.updatedAt));
+
+    await request.query(`
+      INSERT INTO MANUAL_ESCALATIONS (id, escalationType, node, platform, severity, tag, description, startAt, reportingBy, responsibleOfficer, status, createdAt, updatedAt)
+      VALUES (@id, @escalationType, @node, @platform, @severity, @tag, @description, @startAt, @reportingBy, @responsibleOfficer, @status, @createdAt, @updatedAt)
+    `);
+  } catch (dbErr) {
+    console.warn('DB insert failed for manual escalation, persisting in JSON store:', dbErr.message);
+  }
+
   try {
     const items = await readItems();
-    const now = new Date().toISOString();
-    const item = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      escalationType,
-      node,
-      platform,
-      severity,
-      tag,
-      description,
-      startAt: parsedStartAt.toISOString(),
-      reportingBy,
-      responsibleOfficer,
-      status: 'OPEN',
-      createdAt: now,
-      updatedAt: now,
-    };
-
     items.unshift(item);
     await writeItems(items);
     res.status(201).json(item);
@@ -107,12 +165,24 @@ router.post('/', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
-  try {
-    const id = clean(req.params.id);
-    if (!id) {
-      return res.status(400).json({ error: 'ID is required' });
-    }
+  const id = clean(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'ID is required' });
+  }
 
+  try {
+    const request = new db.Request();
+    request.input('id', db.VarChar, id);
+    await request.query(`
+      UPDATE MANUAL_ESCALATIONS
+      SET status = 'CLOSED', updatedAt = GETDATE()
+      WHERE id = @id
+    `);
+  } catch (dbErr) {
+    console.warn('DB delete/close failed for manual escalation:', dbErr.message);
+  }
+
+  try {
     const items = await readItems();
     const itemIndex = items.findIndex((item) => itemId(item) === id);
 

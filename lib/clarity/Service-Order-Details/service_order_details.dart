@@ -289,7 +289,6 @@ class _ServiceOrderDetailsPageState extends State<ServiceOrderDetailsPage> {
   }
 
   Widget _buildContainer(List<Map<String, dynamic>> data) {
-    double screenWidth = MediaQuery.of(context).size.width;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Container(

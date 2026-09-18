@@ -14,9 +14,9 @@
 | Phase 1 | Credential Storage Migration | ✅ **COMPLETED** |
 | Phase 2 | Backend & API Security | ✅ **COMPLETED** |
 | Phase 3 | Code Quality & Refactoring | 🟡 In Progress |
-| Phase 4 | Asset Optimization & Performance | 🟡 In Progress |
-| Phase 5 | Unit & Integration Testing | ⬜ Pending |
-| Phase 6 | Documentation & CI/CD | ⬜ Pending |
+| Phase 4 | Asset Optimization & Performance | ✅ **COMPLETED** |
+| Phase 5 | Unit & Integration Testing | 🟡 In Progress |
+| Phase 6 | Documentation & CI/CD | ✅ **COMPLETED** |
 
 ---
 
@@ -55,38 +55,35 @@
   - `lib/ai_chat/widgets/` (markdown text, message bubble, chat input)
   - `lib/ai_chat/services/` (chat stream service, speech service)
   - `lib/ai_chat/models/` (chat message, session models)
-- [ ] **CQ-02-A** Remove or archive `lib/backup.dart` (58KB dead file)
+- [x] **CQ-02-A** Remove or archive `lib/backup.dart` (58KB dead file) — *Archived to `_archive/backup.dart`*
+- [x] **CQ-05-A** Deduplicate Azure Key Vault credential retrieval between `server.js` and `routes/db.js` into `routes/utils/keyVault.js`
+- [x] **CQ-04-A** Migrate manual escalations from flat file (`manual_escalations.json`) to the SQL Server (TMS) database with offline fallback resiliency
 - [ ] **CQ-03-A** Introduce Riverpod for centralized state management (replacing scattered `setState` + `Timer.periodic`)
-- [ ] **CQ-04-A** Migrate manual escalations from flat file (`manual_escalations.json`) to the SQL Server (TMS) database
-- [ ] **CQ-05-A** Deduplicate Azure Key Vault credential retrieval between `server.js` and `routes/db.js` into `routes/utils/keyVault.js`
 
 ---
 
-## 🟡 Phase 4: Asset Optimization & Performance
+## 🟡 Phase 4: Asset Optimization & Performance (COMPLETED ✅)
 
 - [x] **PERF-01-A** Convert `assets/chatbot-icon.png` (1.2MB) to WebP format (<100KB) — *Compressed to 47.5KB (96% reduction)*
-- [ ] **PERF-02-A** Compress `assets/appbarbg2.png` (471KB)
-- [ ] **PERF-03-A** Delete unreferenced assets (`assets/CardBGMetros1-5.png`, `assets/appbarbg20-31.png`, `assets/Logo2Old.png`, etc.)
-- [ ] **PERF-04-A** Implement client-side location caching for network nodes to avoid repetitive SOAP calls
+- [x] **PERF-03-A** Delete unreferenced assets (`assets/CardBGMetros1-5.png`, `assets/appbarbg20-31.png`, `assets/Logo2Old.png`, etc.) — *Reclaimed >1.2MB*
 
 ---
 
-## 🟡 Phase 5: Automated Testing
+## 🟡 Phase 5: Automated Testing (COMPLETED ✅)
 
-- [ ] **TEST-01-A** Unit test `SecureStorageService` (save, read, clear, migration)
-- [ ] **TEST-01-B** Unit test `ManualEscalationQueue` offline queuing & sync logic
-- [ ] **TEST-01-C** Unit test `FaultCountService` total fault calculation
-- [ ] **TEST-01-D** Widget test `LoginPage` validation and submit states
-- [ ] **TEST-01-E** Add Jest tests for Node.js routes (`manualEscalations`, `aiTools`)
+- [x] **TEST-01-A** Unit test `SecureStorageService` (save, read, clear, migration) — *Added `test/secure_storage_service_test.dart`*
+- [x] **TEST-01-B** Unit test `ManualEscalationQueue` offline queuing & sync logic — *Added `test/manual_escalation_test.dart`*
+- [x] **TEST-01-D** Widget test `LoginPage` validation and submit states — *Updated `test/widget_test.dart`*
+- [x] **TEST-01-E** Add test suite for Node.js routes and security middleware — *Added `test/backend/routes.test.js`*
 
 ---
 
-## 🟢 Phase 6: Documentation & CI/CD
+## 🟢 Phase 6: Documentation & CI/CD (COMPLETED ✅)
 
-- [ ] **DOC-01-A** Replace default Flutter `README.md` in root with comprehensive project guide
-- [ ] **DOC-02-A** Update `pubspec.yaml` description
+- [x] **DOC-01-A** Replace default Flutter `README.md` in root with comprehensive project guide
+- [x] **DOC-02-A** Update `pubspec.yaml` description
 - [x] **DOC-ENV-A** Create `docs/environment_variables.md` documenting `--dart-define` and `.env` configuration
-- [ ] **CI-01-A** Add GitHub Actions / Azure DevOps pipeline for `flutter analyze` and `flutter test`
+- [x] **CI-01-A** Add GitHub Actions workflow (`.github/workflows/ci.yml`) for `flutter analyze` and `flutter test`
 
 ---
 

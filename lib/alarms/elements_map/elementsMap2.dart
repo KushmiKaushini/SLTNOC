@@ -135,7 +135,6 @@ class CustomInfoWidget extends StatelessWidget {
 }
 
 class _elementsMapPage2State extends State<elementsMapPage2> {
-  late GoogleMapController _controller;
   late MapType _currentMapType;
   Location location = Location();
   bool _isLoading = true;
@@ -306,7 +305,7 @@ class _elementsMapPage2State extends State<elementsMapPage2> {
                           target: LatLng(0, 0),
                           zoom: 10,
                         ),
-                  onMapCreated: (controller) => _controller = controller,
+                  onMapCreated: (controller) {},
                   trafficEnabled: true,
                   mapType: _currentMapType,
                   markers: _buildMarkers(),

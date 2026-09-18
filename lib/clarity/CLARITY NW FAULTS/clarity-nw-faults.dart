@@ -15,7 +15,6 @@ class ClarityNwFaultsPage extends StatefulWidget {
 }
 
 class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
-  late Future<void> _fetchDataFuture;
   List<Map<String, dynamic>> clarityNwFaults = [];
   String dropdownValue1 = 'Select an application';
   String dropdownValue2 = 'All';
@@ -28,7 +27,7 @@ class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
   void initState() {
     super.initState();
     _fetchDropdownOptions().then((_) {
-      _fetchDataFuture = fetchData(dropdownValue1, dropdownValue2);
+      fetchData(dropdownValue1, dropdownValue2);
     });
   }
 
@@ -243,8 +242,8 @@ class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
             if (newValue != null) {
               setState(() {
                 dropdownValue1 = newValue;
-                _fetchDataFuture = fetchData(dropdownValue1, dropdownValue2);
               });
+              fetchData(dropdownValue1, dropdownValue2);
             }
           },
           items: dropdownOptions1.map<DropdownMenuItem<String>>((String value) {
@@ -286,8 +285,8 @@ class _ClarityNwFaultsPageState extends State<ClarityNwFaultsPage> {
             if (newValue != null) {
               setState(() {
                 dropdownValue2 = newValue;
-                _fetchDataFuture = fetchData(dropdownValue1, dropdownValue2);
               });
+              fetchData(dropdownValue1, dropdownValue2);
             }
           },
           items: <String>['All', 'CEN-CSC-NW', 'CEN-CSC-DATA', 'CEN-CSC-CC']
