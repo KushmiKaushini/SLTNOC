@@ -1,5 +1,5 @@
 name: sltnoc
-description: "A new Flutter project."
+description: "SLT NOC Portal — Mobile Network Operations Center application for real-time alarm monitoring, clarity fault tracking, and AI assistance."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

@@ -239,6 +239,11 @@ function processMockQuery(queryStr, inputs = {}) {
       }));
   }
 
+  // 12. MANUAL_ESCALATIONS queries
+  if (q.includes('MANUAL_ESCALATIONS')) {
+    return [];
+  }
+
   // Default fallback
   return [];
 }

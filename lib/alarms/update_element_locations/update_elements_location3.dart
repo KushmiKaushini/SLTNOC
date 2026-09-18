@@ -20,7 +20,6 @@ class UpdateElementsLocationPage3 extends StatefulWidget {
 
 class _UpdateElementsLocationPage3State
     extends State<UpdateElementsLocationPage3> {
-  late GoogleMapController _controller;
   late MapType _currentMapType;
   Location location = Location();
   bool _isLoading = true;
@@ -98,7 +97,7 @@ class _UpdateElementsLocationPage3State
                     target: LatLng(_coordinates[0], _coordinates[1]),
                     zoom: 16,
                   ),
-                  onMapCreated: (controller) => _controller = controller,
+                  onMapCreated: (controller) {},
                   onTap: _handleTap,
                   mapType: _currentMapType,
                   myLocationEnabled: true,
