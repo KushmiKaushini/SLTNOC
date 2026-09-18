@@ -56,7 +56,7 @@
   - `lib/ai_chat/services/` (chat stream service, speech service)
   - `lib/ai_chat/models/` (chat message, session models)
 - [x] **CQ-02-A** Remove or archive `lib/backup.dart` (58KB dead file) — *Archived to `_archive/backup.dart`*
-- [ ] **CQ-05-A** Deduplicate Azure Key Vault credential retrieval between `server.js` and `routes/db.js` into `routes/utils/keyVault.js`
+- [x] **CQ-05-A** Deduplicate Azure Key Vault credential retrieval between `server.js` and `routes/db.js` into `routes/utils/keyVault.js`
 - [ ] **CQ-04-A** Migrate manual escalations from flat file (`manual_escalations.json`) to the SQL Server (TMS) database
 - [ ] **CQ-03-A** Introduce Riverpod for centralized state management (replacing scattered `setState` + `Timer.periodic`)
 
